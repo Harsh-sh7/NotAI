@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const passport = require('passport');
 const User = require('../models/User');
 
 const router = express.Router();
@@ -58,7 +59,9 @@ router.post('/signup', async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                avatar: user.avatar,
+                isGoogleAuth: user.isGoogleAuth
             }
         });
     } catch (error) {
@@ -125,7 +128,9 @@ router.post('/login', async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                avatar: user.avatar,
+                isGoogleAuth: user.isGoogleAuth
             }
         });
     } catch (error) {
@@ -157,7 +162,9 @@ router.get('/me', async (req, res) => {
             user: {
                 id: user._id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                avatar: user.avatar,
+                isGoogleAuth: user.isGoogleAuth
             }
         });
     } catch (error) {
@@ -165,5 +172,49 @@ router.get('/me', async (req, res) => {
         res.status(401).json({ error: 'Invalid token' });
     }
 });
+
+// @route   GET /api/auth/google
+// @desc    Start Google OAuth flow
+// @access  Public
+router.get('/google', 
+    passport.authenticate('google', { 
+        scope: [
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/userinfo.email'
+        ]
+    })
+);
+
+// @route   GET /api/auth/google/callback
+// @desc    Google OAuth callback
+// @access  Public
+router.get('/google/callback',
+    passport.authenticate('google', { session: false }),
+    async (req, res) => {
+        try {
+            console.log('OAuth callback - User:', req.user);
+            
+            if (!req.user) {
+                console.error('No user found in OAuth callback');
+                const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+                return res.redirect(`${frontendURL}/?error=no_user`);
+            }
+            
+            // Generate JWT token for the authenticated user
+            const token = generateToken(req.user._id);
+            console.log('Generated token for user:', req.user._id);
+            
+            // Redirect to frontend with token - redirect to home since we always show main app now
+            const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+            const redirectURL = `${frontendURL}/auth/callback?token=${token}&redirect=/`;
+            console.log('Redirecting to:', redirectURL);
+            res.redirect(redirectURL);
+        } catch (error) {
+            console.error('Google OAuth callback error:', error);
+            const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+            res.redirect(`${frontendURL}/?error=callback_error`);
+        }
+    }
+);
 
 module.exports = router;

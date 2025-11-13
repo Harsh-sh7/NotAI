@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { GoogleOAuthButton } from './GoogleOAuthButton';
 
 interface SignupProps {
   onSwitchToLogin: () => void;
@@ -61,6 +62,15 @@ export const Signup: React.FC<SignupProps> = ({ onSwitchToLogin }) => {
               {error}
             </div>
           )}
+
+          {/* Google OAuth Button */}
+          <GoogleOAuthButton text="Sign up with Google" className="mb-6" />
+          
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-secondary"></div>
+            <span className="px-4 text-muted text-sm">or</span>
+            <div className="flex-1 border-t border-secondary"></div>
+          </div>
 
           {/* Signup Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

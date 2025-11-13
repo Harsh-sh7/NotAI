@@ -1,15 +1,18 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { SendIcon } from './Icons';
+import { useAuth } from '../context/AuthContext';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
   isLoading: boolean;
+  onAuthRequired: () => void;
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
+export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, onAuthRequired }) => {
   const [text, setText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -22,6 +25,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim() && !isLoading) {
+      if (!user) {
+        // User is not authenticated, show auth modal
+        onAuthRequired();
+        return;
+      }
       onSendMessage(text);
       setText('');
     }

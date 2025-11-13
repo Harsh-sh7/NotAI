@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { GoogleOAuthButton } from './GoogleOAuthButton';
 
 interface LoginProps {
   onSwitchToSignup: () => void;
@@ -17,9 +18,14 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToSignup }) => {
     setError('');
     setIsLoading(true);
 
+    console.log('Login form submitted with:', { email, password: '***' });
+
     try {
+      console.log('Calling login function...');
       await login(email, password);
+      console.log('Login function completed successfully');
     } catch (err: any) {
+      console.error('Login error caught:', err);
       setError(err.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -42,6 +48,15 @@ export const Login: React.FC<LoginProps> = ({ onSwitchToSignup }) => {
               {error}
             </div>
           )}
+
+          {/* Google OAuth Button */}
+          <GoogleOAuthButton text="Continue with Google" className="mb-6" />
+          
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-secondary"></div>
+            <span className="px-4 text-muted text-sm">or</span>
+            <div className="flex-1 border-t border-secondary"></div>
+          </div>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">

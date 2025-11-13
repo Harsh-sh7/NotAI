@@ -20,8 +20,23 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Password is required'],
+        required: function() {
+            return !this.isGoogleAuth;
+        },
         minlength: [6, 'Password must be at least 6 characters long']
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    avatar: {
+        type: String,
+        default: null
+    },
+    isGoogleAuth: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,
@@ -31,7 +46,7 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-    if (!this.isModified('password')) {
+    if (!this.isModified('password') || !this.password) {
         return next();
     }
     

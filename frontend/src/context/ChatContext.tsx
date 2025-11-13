@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { geminiService } from '../services/geminiService';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -40,6 +41,40 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
   });
+
+  const generateChatTitle = async (messages: ChatMessage[]): Promise<string> => {
+    try {
+      // Only generate title if we have at least 2 messages (user + assistant)
+      if (messages.length < 2) return 'New Chat';
+      
+      // Get the first few messages to understand the conversation context
+      const contextMessages = messages.slice(0, 4).map(msg => 
+        `${msg.role}: ${msg.content}`
+      ).join('\n');
+      
+      const prompt = `Based on this conversation, generate a short, descriptive title (max 4-5 words) that captures the main topic or question being discussed:
+
+${contextMessages}
+
+Title:`;
+
+      const response = await geminiService.sendMessage(prompt);
+      
+      // Clean up the response and limit length
+      let title = response.trim().replace(/^(Title:|Chat:|Conversation:)/i, '').trim();
+      title = title.replace(/['"]/g, ''); // Remove quotes
+      
+      // Limit to reasonable length
+      if (title.length > 50) {
+        title = title.substring(0, 47) + '...';
+      }
+      
+      return title || 'New Chat';
+    } catch (error) {
+      console.error('Error generating chat title:', error);
+      return 'New Chat';
+    }
+  };
 
   // Fetch all chats when the component mounts
   useEffect(() => {
@@ -125,6 +160,26 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             chat._id === updatedChat._id ? updatedChat : chat
           )
         );
+
+        // Auto-generate title after first assistant response if title is still "New Chat"
+        if (role === 'assistant' && 
+            updatedChat.title === 'New Chat' && 
+            updatedChat.messages.length >= 2) {
+          
+          console.log('Auto-generating chat title...');
+          // Add a small delay to avoid interfering with the main chat
+          setTimeout(async () => {
+            try {
+              const newTitle = await generateChatTitle(updatedChat.messages);
+              
+              if (newTitle !== 'New Chat') {
+                await updateChatTitle(updatedChat._id, newTitle);
+              }
+            } catch (error) {
+              console.error('Error in delayed title generation:', error);
+            }
+          }, 1000);
+        }
       }
     } catch (error) {
       console.error('Error saving message:', error);

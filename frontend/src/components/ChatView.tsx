@@ -7,7 +7,11 @@ import { geminiService } from '../services/geminiService';
 import { useChat } from '../context/ChatContext';
 import { ChatHistory } from './ChatHistory';
 
-export const ChatView: React.FC = () => {
+interface ChatViewProps {
+  onAuthRequired: () => void;
+}
+
+export const ChatView: React.FC<ChatViewProps> = ({ onAuthRequired }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
@@ -16,28 +20,31 @@ export const ChatView: React.FC = () => {
   ]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isSendingMessage, setIsSendingMessage] = useState<boolean>(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const { currentChat, saveMessage, createNewChat } = useChat();
 
-  // Sync messages with current chat
+  // Sync messages with current chat (only when not loading and not actively sending a message)
   useEffect(() => {
-    if (currentChat && currentChat.messages.length > 0) {
-      // Convert chat messages to the format expected by the UI
-      const chatMessages: Message[] = currentChat.messages.map(msg => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        content: msg.content,
-      }));
-      setMessages(chatMessages);
-    } else {
-      // Default welcome message when no chat is selected
-      setMessages([
-        {
-          role: 'model',
-          content: "Hello! I'm NotAI. How can I assist you today?",
-        },
-      ]);
+    if (!isLoading && !isSendingMessage) {
+      if (currentChat && currentChat.messages.length > 0) {
+        // Convert chat messages to the format expected by the UI
+        const chatMessages: Message[] = currentChat.messages.map(msg => ({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          content: msg.content,
+        }));
+        setMessages(chatMessages);
+      } else {
+        // Default welcome message when no chat is selected OR when it's a new empty chat
+        setMessages([
+          {
+            role: 'model',
+            content: "Hello! I'm NotAI. How can I assist you today?",
+          },
+        ]);
+      }
     }
-  }, [currentChat]);
+  }, [currentChat, isLoading, isSendingMessage]);
 
   useEffect(() => {
     chatContainerRef.current?.scrollTo({
@@ -49,16 +56,23 @@ export const ChatView: React.FC = () => {
   const handleSendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
 
-    // If no current chat, create a new one
-    if (!currentChat) {
-      await createNewChat();
-    }
-
     const userMessage: Message = { role: 'user', content: text };
+    
+    // Set sending flag to prevent message sync conflicts
+    setIsSendingMessage(true);
+    
+    // Always add user message to UI immediately
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setIsLoading(true);
 
     try {
+      // If no current chat, create a new one first and wait for it
+      if (!currentChat) {
+        await createNewChat();
+        // Wait a bit for the currentChat state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
       // Save user message to chat history
       await saveMessage('user', text);
 
@@ -92,6 +106,7 @@ export const ChatView: React.FC = () => {
       }
     } finally {
       setIsLoading(false);
+      setIsSendingMessage(false);
     }
   }, [isLoading, currentChat, saveMessage, createNewChat]);
 
@@ -121,7 +136,10 @@ export const ChatView: React.FC = () => {
           {messages.map((msg, index) => (
             <ChatMessage key={index} message={msg} />
           ))}
-          {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+          {isLoading && messages.length > 0 && (
+            messages[messages.length - 1].role === 'user' || 
+            (messages[messages.length - 1].role === 'model' && messages[messages.length - 1].content === '')
+          ) && (
              <div className="flex items-start space-x-4 animate-fade-in animate-slide-up">
               <div className="w-8 h-8 flex-shrink-0 rounded-full bg-primary flex items-center justify-center">
                 <GeminiIcon className="w-5 h-5 text-primary-content" />
@@ -137,7 +155,7 @@ export const ChatView: React.FC = () => {
         
         <footer className="p-3 md:p-6 bg-background border-t border-secondary">
           <div className="max-w-3xl mx-auto">
-            <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+            <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} onAuthRequired={onAuthRequired} />
             <p className="text-center text-xs text-muted mt-2">
               Gemini may display inaccurate info. Always fact-check important information.
             </p>

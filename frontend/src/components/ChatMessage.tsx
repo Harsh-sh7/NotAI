@@ -33,6 +33,12 @@ const renderMarkdown = (text: string) => {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const { role, content } = message;
   const isUser = role === 'user';
+  
+  // Don't render empty model messages (they're handled by loading animation)
+  if (!isUser && !content.trim()) {
+    return null;
+  }
+  
   const contentParts = parseContent(content);
 
   const containerClasses = `flex items-start space-x-4 animate-fade-in animate-slide-up ${

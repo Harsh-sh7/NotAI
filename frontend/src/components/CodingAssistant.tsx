@@ -1,20 +1,17 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { CodeEditor } from './CodeEditor';
 import { Notification } from './Notification';
 import { geminiService } from '../services/geminiService';
 import { PlayIcon, SparklesIcon } from './Icons';
-
-interface NotificationType {
-  id: number;
-  content: string;
-}
+import { useAuth } from '../context/AuthContext';
+import { useCoding } from '../context/CodingContext';
 
 const DEFAULT_CODE: Record<string, string> = {
     javascript: `function greet(name) {\n  console.log(\`Hello, \${name}!\`);\n}\n\ngreet("World");`,
     python: `# Note: External packages like numpy, pandas are not available\n\ndef greet(name):\n    print(f"Hello, {name}!")\n    return f"Greeting sent to {name}"\n\nresult = greet("World")\nprint(result)`,
     cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}`,
-    java: `public class Main {  \t\t// Don't change the class name\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
+    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
 };
 
 // Map Monaco languages to Judge0 language IDs
@@ -25,19 +22,34 @@ const LANGUAGE_MAP: Record<string, string> = {
     java: 'java',
 };
 
-export const CodingAssistant: React.FC = () => {
-  const [code, setCode] = useState<string>(DEFAULT_CODE.javascript);
-  const [language, setLanguage] = useState<string>('javascript');
-  const [selection, setSelection] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false); // For AI calls
-  const [isExecuting, setIsExecuting] = useState<boolean>(false); // For code execution
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
-  
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [question, setQuestion] = useState<string>('');
+interface CodingAssistantProps {
+  onAuthRequired: () => void;
+}
 
-  const [output, setOutput] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+export const CodingAssistant: React.FC<CodingAssistantProps> = ({ onAuthRequired }) => {
+  const { user } = useAuth();
+  const {
+    code,
+    setCode,
+    language,
+    setLanguage,
+    selection,
+    setSelection,
+    isLoading,
+    setIsLoading,
+    isExecuting,
+    setIsExecuting,
+    notifications,
+    setNotifications,
+    isModalOpen,
+    setIsModalOpen,
+    question,
+    setQuestion,
+    output,
+    setOutput,
+    error,
+    setError,
+  } = useCoding();
 
 
   const handleLanguageChange = (newLanguage: string) => {
@@ -98,6 +110,11 @@ export const CodingAssistant: React.FC = () => {
   };
 
   const handleRunCode = async () => {
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
+
     setOutput([]);
     setError(null);
     setIsExecuting(true);
@@ -113,6 +130,10 @@ export const CodingAssistant: React.FC = () => {
   };
 
   const handleAskAboutError = async () => {
+    if (!user) {
+      onAuthRequired();
+      return;
+    }
     if (!error) return;
     
     setIsLoading(true);
@@ -142,6 +163,11 @@ ${error}
 
   const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      onAuthRequired();
+      setIsModalOpen(false);
+      return;
+    }
     if (!question.trim()) return;
 
     setIsLoading(true);

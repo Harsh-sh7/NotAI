@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useChat } from '../context/ChatContext';
 
 interface ChatHistoryProps {
@@ -10,6 +10,66 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
   const { chats, currentChat, loading, createNewChat, loadChat, deleteChat, updateChatTitle } = useChat();
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState('');
+  const [sidebarWidth, setSidebarWidth] = useState(256); // Default 64 * 4 = 256px
+  const [isResizing, setIsResizing] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const newWidth = e.clientX;
+    const minWidth = 200;
+    const maxWidth = 500;
+    
+    if (newWidth >= minWidth && newWidth <= maxWidth) {
+      setSidebarWidth(newWidth);
+    }
+  }, [isResizing]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  // Add event listeners for resize
+  React.useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
+  // Handle keyboard events for delete modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (deleteModalOpen && e.key === 'Escape') {
+        cancelDeleteChat();
+      }
+    };
+
+    if (deleteModalOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [deleteModalOpen]);
 
   const handleNewChat = async () => {
     try {
@@ -31,15 +91,27 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
     }
   };
 
-  const handleDeleteChat = async (e: React.MouseEvent, chatId: string) => {
+  const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this chat?')) {
+    setChatToDelete(chatId);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDeleteChat = async () => {
+    if (chatToDelete) {
       try {
-        await deleteChat(chatId);
+        await deleteChat(chatToDelete);
+        setDeleteModalOpen(false);
+        setChatToDelete(null);
       } catch (error) {
         console.error('Error deleting chat:', error);
       }
     }
+  };
+
+  const cancelDeleteChat = () => {
+    setDeleteModalOpen(false);
+    setChatToDelete(null);
   };
 
   const startEditing = (e: React.MouseEvent, chatId: string, currentTitle: string) => {
@@ -109,11 +181,17 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
         />
       )}
       
-      <div className={`
-        fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-secondary z-50
-        transform transition-transform duration-300 ease-in-out flex flex-col
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
+      <div 
+        ref={sidebarRef}
+        className={`
+          fixed md:relative top-0 left-0 h-full bg-surface border-r border-secondary z-50
+          transform transition-transform duration-300 ease-in-out flex flex-col
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
+        style={{ 
+          width: window.innerWidth >= 768 ? `${sidebarWidth}px` : '256px' 
+        }}
+      >
         {/* Mobile close button */}
         <div className="flex justify-between items-center p-4 md:hidden border-b border-secondary">
           <h2 className="text-lg font-semibold text-primary-content">Chat History</h2>
@@ -198,7 +276,59 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
             </div>
           ))}
         </div>
+        
+        {/* Resize handle - only on desktop */}
+        <div 
+          className="hidden md:block absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors"
+          onMouseDown={handleMouseDown}
+        />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4"
+          onClick={cancelDeleteChat}
+        >
+          <div 
+            className="bg-background rounded-lg shadow-xl max-w-md w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-primary-content">Delete Chat</h3>
+                  <p className="text-sm text-muted">This action cannot be undone.</p>
+                </div>
+              </div>
+              
+              <p className="text-muted mb-6">
+                Are you sure you want to delete this chat? All messages in this conversation will be permanently removed.
+              </p>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={cancelDeleteChat}
+                  className="px-4 py-2 text-sm font-medium text-muted hover:text-primary-content bg-secondary hover:bg-surface rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteChat}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  Delete Chat
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
