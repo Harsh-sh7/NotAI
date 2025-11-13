@@ -5,23 +5,14 @@ export const AuthCallback: React.FC = () => {
   const { setTokenFromCallback } = useAuth();
 
   useEffect(() => {
-    console.log('AuthCallback: Component mounted');
-    console.log('AuthCallback: Current URL:', window.location.href);
-    
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     const redirectPath = urlParams.get('redirect') || '/';
     
-    console.log('AuthCallback: Token found:', token ? 'Yes' : 'No');
-    console.log('AuthCallback: Redirect path:', redirectPath);
-    console.log('AuthCallback: All URL params:', Array.from(urlParams.entries()));
-    
     if (token) {
-      console.log('AuthCallback: Calling setTokenFromCallback...');
       setTokenFromCallback(token, redirectPath);
     } else {
       // Handle error case - redirect to home page
-      console.error('AuthCallback: No token received from OAuth callback');
       window.location.href = '/';
     }
   }, [setTokenFromCallback]);

@@ -146,20 +146,13 @@ const AuthWrapper: React.FC = () => {
     return () => window.removeEventListener('popstate', handleRouteChange);
   }, []);
 
-  console.log('AuthWrapper: Current pathname:', currentPath);
-  console.log('AuthWrapper: User state:', user);
-  console.log('AuthWrapper: Loading state:', isLoading);
-  console.log('AuthWrapper: Full URL:', window.location.href);
-
   // OAuth callback route
   if (currentPath === '/auth/callback') {
-    console.log('AuthWrapper: Detected /auth/callback route, rendering AuthCallback component');
     return <AuthCallback />;
   }
 
   // If we're on /profile, redirect to home since we always show main app now
   if (currentPath === '/profile') {
-    console.log('AuthWrapper: Redirecting from /profile to home');
     window.history.pushState({}, '', '/');
   }
 

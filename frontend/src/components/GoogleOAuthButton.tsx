@@ -13,11 +13,6 @@ export const GoogleOAuthButton: React.FC<GoogleOAuthButtonProps> = ({
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
     const oauthUrl = `${API_URL}/api/auth/google`;
     
-    console.log('GoogleOAuthButton: Button clicked');
-    console.log('GoogleOAuthButton: API_URL:', API_URL);
-    console.log('GoogleOAuthButton: OAuth URL:', oauthUrl);
-    console.log('GoogleOAuthButton: Redirecting to Google OAuth...');
-    
     window.location.href = oauthUrl;
   };
 

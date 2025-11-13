@@ -166,7 +166,6 @@ Title:`;
             updatedChat.title === 'New Chat' && 
             updatedChat.messages.length >= 2) {
           
-          console.log('Auto-generating chat title...');
           // Add a small delay to avoid interfering with the main chat
           setTimeout(async () => {
             try {
