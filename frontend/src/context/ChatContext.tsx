@@ -25,6 +25,7 @@ interface ChatContextType {
   deleteChat: (chatId: string) => Promise<void>;
   updateChatTitle: (chatId: string, title: string) => Promise<void>;
   refreshChats: () => Promise<void>;
+  clearAllData: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -76,10 +77,14 @@ Title:`;
     }
   };
 
-  // Fetch all chats when the component mounts
+  // Fetch all chats when the component mounts or when token changes
   useEffect(() => {
     if (token) {
       refreshChats();
+    } else {
+      // Clear chat data when user logs out
+      setChats([]);
+      setCurrentChat(null);
     }
   }, [token]);
 
@@ -248,6 +253,12 @@ Title:`;
     }
   };
 
+  const clearAllData = () => {
+    setChats([]);
+    setCurrentChat(null);
+    setLoading(false);
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -260,6 +271,7 @@ Title:`;
         deleteChat,
         updateChatTitle,
         refreshChats,
+        clearAllData,
       }}
     >
       {children}

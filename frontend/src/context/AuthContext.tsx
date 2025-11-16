@@ -157,7 +157,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
+    
+    // Only clear the auth token - user data should persist for when they sign back in
     localStorage.removeItem('token');
+    
+    // Force a page reload to clear all context states and show login screen
+    window.location.reload();
   };
 
   return (
