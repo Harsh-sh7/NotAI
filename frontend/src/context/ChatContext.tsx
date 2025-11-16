@@ -19,9 +19,9 @@ interface ChatContextType {
   chats: Chat[];
   currentChat: Chat | null;
   loading: boolean;
-  createNewChat: () => Promise<void>;
+  createNewChat: () => Promise<Chat | null>;
   loadChat: (chatId: string) => Promise<void>;
-  saveMessage: (role: 'user' | 'assistant', content: string) => Promise<void>;
+  saveMessage: (role: 'user' | 'assistant', content: string, chatIdOverride?: string) => Promise<void>;
   deleteChat: (chatId: string) => Promise<void>;
   updateChatTitle: (chatId: string, title: string) => Promise<void>;
   refreshChats: () => Promise<void>;
@@ -103,8 +103,8 @@ Title:`;
     }
   };
 
-  const createNewChat = async () => {
-    if (!token) return;
+  const createNewChat = async (): Promise<Chat | null> => {
+    if (!token) return null;
     
     try {
       const response = await fetch(`${API_URL}/api/chats`, {
@@ -117,10 +117,13 @@ Title:`;
         const newChat = await response.json();
         setChats(prev => [newChat, ...prev]);
         setCurrentChat(newChat);
+        return newChat;
       }
     } catch (error) {
       console.error('Error creating new chat:', error);
     }
+    
+    return null;
   };
 
   const loadChat = async (chatId: string) => {
@@ -140,11 +143,14 @@ Title:`;
     }
   };
 
-  const saveMessage = async (role: 'user' | 'assistant', content: string) => {
-    if (!currentChat || !token) return;
+  const saveMessage = async (role: 'user' | 'assistant', content: string, chatIdOverride?: string) => {
+    if (!token) return;
+    
+    const chatId = chatIdOverride || currentChat?._id;
+    if (!chatId) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/chats/${currentChat._id}`, {
+      const response = await fetch(`${API_URL}/api/chats/${chatId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({ role, content }),
@@ -152,7 +158,14 @@ Title:`;
 
       if (response.ok) {
         const updatedChat = await response.json();
-        setCurrentChat(updatedChat);
+        
+        // Only update currentChat if it's the same chat or if we don't have a current chat
+        setCurrentChat(prev => {
+          if (!prev || prev._id === updatedChat._id) {
+            return updatedChat;
+          }
+          return prev;
+        });
         
         // Update the chat in the chats list
         setChats(prev => 

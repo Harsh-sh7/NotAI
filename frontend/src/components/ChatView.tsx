@@ -65,16 +65,21 @@ export const ChatView: React.FC<ChatViewProps> = ({ onAuthRequired }) => {
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setIsLoading(true);
 
+    let activeChatId = currentChat?._id;
+
     try {
-      // If no current chat, create a new one first and wait for it
+      // If no current chat, create a new one first and get its ID
       if (!currentChat) {
-        await createNewChat();
-        // Wait a bit for the currentChat state to update
-        await new Promise(resolve => setTimeout(resolve, 100));
+        const newChat = await createNewChat();
+        if (newChat) {
+          activeChatId = newChat._id;
+        } else {
+          throw new Error('Failed to create new chat');
+        }
       }
 
-      // Save user message to chat history
-      await saveMessage('user', text);
+      // Save user message to chat history with explicit chat ID
+      await saveMessage('user', text, activeChatId);
 
       // Add empty model message for streaming effect
       setMessages((prev) => [...prev, { role: 'model', content: '' }]);
@@ -88,8 +93,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ onAuthRequired }) => {
         { role: 'model', content: response },
       ]);
 
-      // Save assistant response to chat history
-      await saveMessage('assistant', response);
+      // Save assistant response to chat history with explicit chat ID
+      await saveMessage('assistant', response, activeChatId);
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage = 'Sorry, I encountered an error. Please try again.';
@@ -100,7 +105,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ onAuthRequired }) => {
       
       // Save error message to chat history
       try {
-        await saveMessage('assistant', errorMessage);
+        await saveMessage('assistant', errorMessage, activeChatId);
       } catch (saveError) {
         console.error('Error saving error message:', saveError);
       }

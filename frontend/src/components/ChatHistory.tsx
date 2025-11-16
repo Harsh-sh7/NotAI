@@ -73,10 +73,12 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
 
   const handleNewChat = async () => {
     try {
-      await createNewChat();
-      // Close sidebar on mobile after creating new chat
-      if (window.innerWidth < 768) {
-        onClose();
+      const newChat = await createNewChat();
+      if (newChat) {
+        // Close sidebar on mobile after creating new chat
+        if (window.innerWidth < 768) {
+          onClose();
+        }
       }
     } catch (error) {
       console.error('Error creating new chat:', error);
