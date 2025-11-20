@@ -23,11 +23,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isResizing) return;
-    
+
     const newWidth = e.clientX;
     const minWidth = 200;
     const maxWidth = 500;
-    
+
     if (newWidth >= minWidth && newWidth <= maxWidth) {
       setSidebarWidth(newWidth);
     }
@@ -72,6 +72,12 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
   }, [deleteModalOpen]);
 
   const handleNewChat = async () => {
+    // Check if current chat is empty (has no messages or only the welcome message)
+    if (currentChat && currentChat.messages.length <= 1) {
+      // If current chat is empty, just keep it selected instead of creating a new one
+      return;
+    }
+
     try {
       const newChat = await createNewChat();
       if (newChat) {
@@ -155,12 +161,12 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
       <>
         {/* Mobile overlay */}
         {isOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
             onClick={onClose}
           />
         )}
-        
+
         <div className={`
           fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-secondary z-50
           transform transition-transform duration-300 ease-in-out
@@ -177,21 +183,21 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={onClose}
         />
       )}
-      
-      <div 
+
+      <div
         ref={sidebarRef}
         className={`
           fixed md:relative top-0 left-0 h-full bg-surface border-r border-secondary z-50
           transform transition-transform duration-300 ease-in-out flex flex-col
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
-        style={{ 
-          width: window.innerWidth >= 768 ? `${sidebarWidth}px` : '256px' 
+        style={{
+          width: window.innerWidth >= 768 ? `${sidebarWidth}px` : '256px'
         }}
       >
         {/* Mobile close button */}
@@ -210,7 +216,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
         <div className="p-4">
           <button
             onClick={handleNewChat}
-            className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-primary text-primary-content hover:bg-opacity-90 transition-colors"
+            className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary text-primary-content hover:bg-opacity-90 transition-colors"
           >
             <span className="text-lg">+</span>
             <span>New Chat</span>
@@ -221,11 +227,10 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
           {chats.map((chat) => (
             <div
               key={chat._id}
-              className={`group flex items-center justify-between p-3 mb-2 rounded-lg cursor-pointer transition-colors ${
-                currentChat?._id === chat._id 
-                  ? 'bg-primary bg-opacity-20' 
+              className={`group flex items-center justify-between p-3 mb-2 rounded-lg cursor-pointer transition-colors ${currentChat?._id === chat._id
+                  ? 'bg-primary bg-opacity-20'
                   : 'hover:bg-secondary'
-              }`}
+                }`}
               onClick={() => handleChatSelect(chat._id)}
             >
               {editingChatId === chat._id ? (
@@ -278,9 +283,9 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
             </div>
           ))}
         </div>
-        
+
         {/* Resize handle - only on desktop */}
-        <div 
+        <div
           className="hidden md:block absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors"
           onMouseDown={handleMouseDown}
         />
@@ -288,11 +293,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4"
           onClick={cancelDeleteChat}
         >
-          <div 
+          <div
             className="bg-background rounded-lg shadow-xl max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
@@ -308,11 +313,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
                   <p className="text-sm text-muted">This action cannot be undone.</p>
                 </div>
               </div>
-              
+
               <p className="text-muted mb-6">
                 Are you sure you want to delete this chat? All messages in this conversation will be permanently removed.
               </p>
-              
+
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={cancelDeleteChat}

@@ -34,7 +34,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
       setText('');
     }
   };
-  
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -43,7 +43,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end space-x-2 bg-surface p-2 rounded-2xl border border-secondary focus-within:border-primary transition-colors duration-300">
+    <form onSubmit={handleSubmit} className="flex items-end space-x-2 bg-secondary p-3 rounded-2xl border-2 border-border focus-within:border-accent transition-all duration-300">
       <textarea
         ref={textareaRef}
         value={text}
@@ -51,15 +51,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, 
         onKeyDown={handleKeyDown}
         placeholder="Type your message..."
         rows={1}
-        className="flex-1 bg-transparent text-primary-content placeholder-muted resize-none focus:outline-none max-h-48 p-2"
+        className="flex-1 bg-transparent text-primary-text placeholder-secondary-text resize-none focus:outline-none max-h-48 p-2"
         disabled={isLoading}
       />
       <button
         type="submit"
         disabled={isLoading || !text.trim()}
-        className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-primary hover:bg-primary-focus disabled:bg-secondary disabled:cursor-not-allowed transition-all duration-200"
+        className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-accent hover:opacity-80 disabled:bg-border disabled:cursor-not-allowed transition-all duration-200"
       >
-        <SendIcon className="w-5 h-5 text-primary-content" />
+        <SendIcon className="w-5 h-5 text-primary" />
       </button>
     </form>
   );

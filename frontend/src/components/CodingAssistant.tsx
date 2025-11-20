@@ -8,18 +8,18 @@ import { useAuth } from '../context/AuthContext';
 import { useCoding } from '../context/CodingContext';
 
 const DEFAULT_CODE: Record<string, string> = {
-    javascript: `function greet(name) {\n  console.log(\`Hello, \${name}!\`);\n}\n\ngreet("World");`,
-    python: `# Note: External packages like numpy, pandas are not available\n\ndef greet(name):\n    print(f"Hello, {name}!")\n    return f"Greeting sent to {name}"\n\nresult = greet("World")\nprint(result)`,
-    cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}`,
-    java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
+  javascript: `function greet(name) {\n  console.log(\`Hello, \${name}!\`);\n}\n\ngreet("World");`,
+  python: `# Note: External packages like numpy, pandas are not available\n\ndef greet(name):\n    print(f"Hello, {name}!")\n    return f"Greeting sent to {name}"\n\nresult = greet("World")\nprint(result)`,
+  cpp: `#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}`,
+  java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
 };
 
 // Map Monaco languages to Judge0 language IDs
 const LANGUAGE_MAP: Record<string, string> = {
-    javascript: 'javascript',
-    python: 'python',
-    cpp: 'cpp',
-    java: 'java',
+  javascript: 'javascript',
+  python: 'python',
+  cpp: 'cpp',
+  java: 'java',
 };
 
 interface CodingAssistantProps {
@@ -70,43 +70,43 @@ export const CodingAssistant: React.FC<CodingAssistantProps> = ({ onAuthRequired
   };
 
   const executeCodeBackend = async (lang: string, codeToExecute: string) => {
-      try {
-          // Connect to backend server using environment variable
-          const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-          const response = await fetch(`${backendUrl}/execute`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                  language: lang,
-                  code: codeToExecute,
-              }),
-          });
+    try {
+      // Connect to backend server using environment variable
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      const response = await fetch(`${backendUrl}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          language: lang,
+          code: codeToExecute,
+        }),
+      });
 
-          if (!response.ok) {
-              const errData = await response.json();
-              throw new Error(errData.error || 'Failed to execute code on the server.');
-          }
-
-          const result = await response.json();
-          
-          if (result.status.id === 3) { // Accepted
-              setOutput(result.stdout ? result.stdout.split('\n') : ['Execution finished with no output.']);
-          } else { // Some kind of error
-              let errorMessage = result.stderr || result.compile_output || result.status.description || 'An unknown execution error occurred.';
-              
-              // Provide helpful messages for common errors
-              if (errorMessage.includes('ModuleNotFoundError') || errorMessage.includes('No module named')) {
-                  errorMessage += '\n\nNote: Judge0 only supports Python standard library. External packages like numpy, pandas, requests, etc. are not available.';
-              }
-              
-              setError(errorMessage);
-          }
-
-      } catch (e: any) {
-          setError(`Execution failed: ${e.message}`);
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to execute code on the server.');
       }
+
+      const result = await response.json();
+
+      if (result.status.id === 3) { // Accepted
+        setOutput(result.stdout ? result.stdout.split('\n') : ['Execution finished with no output.']);
+      } else { // Some kind of error
+        let errorMessage = result.stderr || result.compile_output || result.status.description || 'An unknown execution error occurred.';
+
+        // Provide helpful messages for common errors
+        if (errorMessage.includes('ModuleNotFoundError') || errorMessage.includes('No module named')) {
+          errorMessage += '\n\nNote: Judge0 only supports Python standard library. External packages like numpy, pandas, requests, etc. are not available.';
+        }
+
+        setError(errorMessage);
+      }
+
+    } catch (e: any) {
+      setError(`Execution failed: ${e.message}`);
+    }
   };
 
   const handleRunCode = async () => {
@@ -120,12 +120,12 @@ export const CodingAssistant: React.FC<CodingAssistantProps> = ({ onAuthRequired
     setIsExecuting(true);
 
     try {
-        // Execute all languages through Judge0 backend
-        await executeCodeBackend(LANGUAGE_MAP[language], code);
+      // Execute all languages through Judge0 backend
+      await executeCodeBackend(LANGUAGE_MAP[language], code);
     } catch (e: any) {
-        setError(`An unexpected error occurred: ${e.message || String(e)}`);
+      setError(`An unexpected error occurred: ${e.message || String(e)}`);
     } finally {
-        setIsExecuting(false);
+      setIsExecuting(false);
     }
   };
 
@@ -135,9 +135,9 @@ export const CodingAssistant: React.FC<CodingAssistantProps> = ({ onAuthRequired
       return;
     }
     if (!error) return;
-    
+
     setIsLoading(true);
-    
+
     const prompt = `I encountered an error in my ${language} code. Can you help me understand and fix it?
 
 **Programming Language:** ${language}
@@ -216,22 +216,22 @@ ${error}
     <div className="flex-1 flex flex-col overflow-hidden">
       <main className="flex-1 p-4 md:p-6 flex flex-col items-center overflow-y-auto">
         <div className="w-full max-w-6xl space-y-4">
-          <div className="flex flex-wrap gap-4 justify-between items-center bg-surface p-2 rounded-lg border border-secondary">
+          <div className="flex flex-wrap gap-4 justify-between items-center bg-secondary p-3 rounded-lg border-2 border-border">
             <div className="flex items-center gap-4">
               <select
                 value={language}
                 onChange={(e) => handleLanguageChange(e.target.value)}
-                className="bg-secondary px-3 py-2 rounded-md text-sm text-primary-content focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+                className="bg-primary border-2 border-border px-4 py-2 rounded-lg text-sm text-primary-text focus:outline-none focus:border-accent transition-all"
               >
                 <option value="javascript">JavaScript</option>
                 <option value="python">Python</option>
                 <option value="cpp">C++</option>
                 <option value="java">Java</option>
               </select>
-               <button
+              <button
                 onClick={handleRunCode}
                 disabled={isExecuting}
-                className="px-4 py-2 bg-secondary hover:bg-opacity-80 rounded-lg flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-accent text-primary hover:opacity-80 rounded-lg flex items-center transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <PlayIcon className="w-5 h-5 mr-2" /> {runButtonText}
               </button>
@@ -239,7 +239,7 @@ ${error}
             <button
               onClick={handleAskAboutSelection}
               disabled={!selection || selection.length === 0 || isLoading}
-              className="px-4 py-2 bg-primary hover:bg-primary-focus rounded-lg disabled:bg-secondary disabled:cursor-not-allowed transition-colors font-medium"
+              className="px-4 py-2 bg-accent text-primary hover:opacity-80 rounded-lg disabled:bg-secondary disabled:text-secondary-text disabled:cursor-not-allowed transition-all font-semibold"
             >
               {isLoading ? 'Thinking...' : 'Ask about selection'}
             </button>
@@ -251,19 +251,19 @@ ${error}
             onSelectionChange={handleSelectionChange}
           />
           {(output.length > 0 || error) && (
-            <div className="mt-4 bg-background p-4 rounded-lg border border-secondary animate-fade-in">
-              <h3 className="text-sm font-semibold text-muted mb-2 tracking-wider uppercase">Console</h3>
-              <div className="text-sm whitespace-pre-wrap font-mono text-secondary-content max-h-48 overflow-y-auto">
-                  {output.map((line, index) => <div key={index} className="border-l-2 border-transparent pl-2">{line}</div>)}
-                  {error && (
-                      <div className="text-red-400 border-l-2 border-red-400 pl-2 mt-2">
-                          <p>{error}</p>
-                          <button onClick={handleAskAboutError} disabled={isLoading} className="mt-2 text-sm flex items-center px-3 py-1 bg-red-500 bg-opacity-20 hover:bg-opacity-30 rounded-md transition-all text-red-300 disabled:opacity-50">
-                              <SparklesIcon className="w-4 h-4 mr-2" />
-                              {isLoading ? 'Analyzing...' : 'Ask AI about this error'}
-                          </button>
-                      </div>
-                  )}
+            <div className="mt-4 bg-secondary p-4 rounded-lg border-2 border-border animate-fade-in">
+              <h3 className="text-sm font-semibold text-secondary-text mb-2 tracking-wider uppercase">Console</h3>
+              <div className="text-sm whitespace-pre-wrap font-mono text-primary-text max-h-48 overflow-y-auto">
+                {output.map((line, index) => <div key={index} className="border-l-2 border-transparent pl-2">{line}</div>)}
+                {error && (
+                  <div className="text-red-500 border-l-2 border-red-500 pl-2 mt-2">
+                    <p>{error}</p>
+                    <button onClick={handleAskAboutError} disabled={isLoading} className="mt-2 text-sm flex items-center px-3 py-1 bg-red-500 bg-opacity-20 hover:bg-opacity-30 rounded-md transition-all text-red-400 disabled:opacity-50 font-medium">
+                      <SparklesIcon className="w-4 h-4 mr-2" />
+                      {isLoading ? 'Analyzing...' : 'Ask AI about this error'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -272,20 +272,20 @@ ${error}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-surface p-6 rounded-lg shadow-xl w-full max-w-lg animate-slide-up">
-            <h2 className="text-lg font-semibold mb-2">Ask about your code</h2>
-            <p className="text-sm text-muted mb-4">Your selected code snippet will be sent to Gemini along with your question.</p>
+          <div className="bg-secondary border-2 border-border p-6 rounded-lg shadow-xl w-full max-w-lg animate-slide-up">
+            <h2 className="text-lg font-semibold mb-2 text-primary-text">Ask about your code</h2>
+            <p className="text-sm text-secondary-text mb-4">Your selected code snippet will be sent to Gemini along with your question.</p>
             <form onSubmit={handleModalSubmit}>
               <textarea
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="e.g., How can I optimize this function?"
                 rows={4}
-                className="w-full bg-background border border-secondary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-primary border-2 border-border rounded-lg p-3 focus:outline-none focus:border-accent text-primary-text placeholder-secondary-text transition-all"
               />
               <div className="mt-4 flex justify-end space-x-2">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-secondary rounded-lg hover:opacity-80">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-primary rounded-lg hover:bg-primary-focus">Submit</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-primary border-2 border-border rounded-lg hover:border-accent transition-all font-medium">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-accent text-primary rounded-lg hover:opacity-80 transition-all font-semibold">Submit</button>
               </div>
             </form>
           </div>
