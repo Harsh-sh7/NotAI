@@ -8,6 +8,7 @@ const passport = require('passport');
 const session = require('express-session');
 const authRoutes = require('./routes/auth');
 const chatRoutes = require('./routes/chat');
+const contestRoutes = require('./routes/contest');
 const authMiddleware = require('./middleware/auth');
 
 // Initialize Passport configuration
@@ -46,6 +47,7 @@ mongoose.connect(process.env.MONGODB_URI)
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/chats', chatRoutes);
+app.use('/api/contest', contestRoutes);
 
 const LANGUAGE_IDS = {
     javascript: 93, // Node.js
@@ -82,7 +84,8 @@ app.post('/execute', async (req, res) => {
             language_id: languageId,
             source_code: code,
             stdin: stdin || ''
-        }
+        },
+        timeout: 10000 // 10 second timeout
     };
 
     try {
@@ -104,7 +107,8 @@ app.post('/execute', async (req, res) => {
             headers: {
                 'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
                 'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
-            }
+            },
+            timeout: 10000 // 10 second timeout
         };
 
         // Poll for the result
@@ -125,8 +129,16 @@ app.post('/execute', async (req, res) => {
         res.json(result);
 
     } catch (error) {
-        console.error('Error with Judge0 API:', error.response ? error.response.data : error.message);
-        res.status(500).json({ error: 'An error occurred while executing the code.' });
+        console.error('Error with Judge0 API:');
+        console.error('Error message:', error.message);
+        if (error.response) {
+            console.error('Response status:', error.response.status);
+            console.error('Response data:', error.response.data);
+        }
+        res.status(500).json({ 
+            error: 'An error occurred while executing the code.',
+            details: error.response?.data || error.message
+        });
     }
 });
 

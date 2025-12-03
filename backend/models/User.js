@@ -38,6 +38,11 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    contestLevel: {
+        type: String,
+        enum: ['Beginner', 'Intermediate', 'Expert'],
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now

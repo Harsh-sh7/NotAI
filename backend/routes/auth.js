@@ -61,7 +61,8 @@ router.post('/signup', async (req, res) => {
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
-                isGoogleAuth: user.isGoogleAuth
+                isGoogleAuth: user.isGoogleAuth,
+                contestLevel: user.contestLevel
             }
         });
     } catch (error) {
@@ -130,7 +131,8 @@ router.post('/login', async (req, res) => {
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
-                isGoogleAuth: user.isGoogleAuth
+                isGoogleAuth: user.isGoogleAuth,
+                contestLevel: user.contestLevel
             }
         });
     } catch (error) {
@@ -164,7 +166,8 @@ router.get('/me', async (req, res) => {
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
-                isGoogleAuth: user.isGoogleAuth
+                isGoogleAuth: user.isGoogleAuth,
+                contestLevel: user.contestLevel
             }
         });
     } catch (error) {
@@ -216,5 +219,50 @@ router.get('/google/callback',
         }
     }
 );
+
+// @route   PUT /api/auth/contest-level
+// @desc    Update user's contest level
+// @access  Private
+router.put('/contest-level', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { contestLevel } = req.body;
+
+        if (!contestLevel || !['Beginner', 'Intermediate', 'Expert'].includes(contestLevel)) {
+            return res.status(400).json({ error: 'Invalid contest level' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            decoded.userId,
+            { contestLevel },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                avatar: user.avatar,
+                isGoogleAuth: user.isGoogleAuth,
+                contestLevel: user.contestLevel
+            }
+        });
+    } catch (error) {
+        console.error('Update contest level error:', error);
+        res.status(500).json({ error: 'Server error updating contest level' });
+    }
+});
 
 module.exports = router;

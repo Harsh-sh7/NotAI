@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
 import { CodingProvider } from './context/CodingContext';
+import { ContestProvider } from './context/ContestContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { ChatView } from './components/ChatView';
 import { CodingAssistant } from './components/CodingAssistant';
+import { Contest } from './components/Contest';
 import { AuthCallback } from './components/AuthCallback';
 import { AuthModal } from './components/AuthModal';
 import { UserAvatar } from './components/UserAvatar';
@@ -12,7 +14,7 @@ import { LandingPage } from './components/LandingPage';
 import { Logo } from './components/Logo';
 import { CodeIcon } from './components/Icons';
 
-type View = 'chat' | 'code';
+type View = 'chat' | 'code' | 'contest';
 type AuthView = 'login' | 'signup';
 
 const MainApp: React.FC = () => {
@@ -20,6 +22,7 @@ const MainApp: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
   const { user, logout, isLoading } = useAuth();
+  const { theme, toggleTheme } = useTheme(); // MUST be called before any conditional returns
 
   // Check if user has visited before
   useEffect(() => {
@@ -38,8 +41,6 @@ const MainApp: React.FC = () => {
   if (showLanding) {
     return <LandingPage onGetStarted={handleGetStarted} />;
   }
-
-  const { theme, toggleTheme } = useTheme();
 
   const navButtonClasses = (buttonView: View) =>
     `px-4 py-2 rounded-md text-sm font-medium transition-colors ${view === buttonView
@@ -92,6 +93,15 @@ const MainApp: React.FC = () => {
                 }`}
             >
               Coding Assistant
+            </button>
+            <button
+              onClick={() => setView('contest')}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${view === 'contest'
+                ? 'bg-accent text-primary shadow-lg'
+                : 'text-secondary-text hover:text-primary-text hover:bg-secondary'
+                }`}
+            >
+              Contest
             </button>
           </div>
 
@@ -170,6 +180,17 @@ const MainApp: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
             </button>
+            <button
+              onClick={() => setView('contest')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-1 ${view === 'contest'
+                ? 'bg-accent text-primary shadow-lg'
+                : 'text-secondary-text hover:text-primary-text'
+                }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+            </button>
           </div>
 
           {/* Theme Toggle for Mobile */}
@@ -204,7 +225,13 @@ const MainApp: React.FC = () => {
         )}
       </div>
       <div className="flex-1 overflow-hidden">
-        {view === 'chat' ? <ChatView onAuthRequired={() => setShowAuthModal(true)} /> : <CodingAssistant onAuthRequired={() => setShowAuthModal(true)} />}
+        {view === 'chat' ? (
+          <ChatView onAuthRequired={() => setShowAuthModal(true)} />
+        ) : view === 'code' ? (
+          <CodingAssistant onAuthRequired={() => setShowAuthModal(true)} />
+        ) : (
+          <Contest onAuthRequired={() => setShowAuthModal(true)} />
+        )}
       </div>
 
       {/* Auth Modal */}
@@ -244,7 +271,9 @@ const AuthWrapper: React.FC = () => {
   return (
     <ChatProvider>
       <CodingProvider>
-        <MainApp />
+        <ContestProvider>
+          <MainApp />
+        </ContestProvider>
       </CodingProvider>
     </ChatProvider>
   );

@@ -6,6 +6,7 @@ interface User {
   email: string;
   avatar?: string;
   isGoogleAuth?: boolean;
+  contestLevel?: string | null;
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
   signup: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   setTokenFromCallback: (token: string, redirectPath?: string) => Promise<void>;
+  updateContestLevel: (level: string) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -42,7 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing token on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    
+
     if (storedToken) {
       fetchUser(storedToken);
     } else {
@@ -123,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       setToken(authToken);
       localStorage.setItem('token', authToken);
-      
+
       const response = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -133,7 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
-        
+
         // Use history API instead of window.location.href to avoid full reload
         setTimeout(() => {
           window.history.pushState({}, '', redirectPath);
@@ -154,19 +156,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateContestLevel = async (level: string) => {
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${API_URL}/api/auth/contest-level`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ contestLevel: level })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to update contest level');
+    }
+
+    setUser(data.user);
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
-    
+
     // Only clear the auth token - user data should persist for when they sign back in
     localStorage.removeItem('token');
-    
+
     // Force a page reload to clear all context states and show login screen
     window.location.reload();
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout, setTokenFromCallback, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout, setTokenFromCallback, updateContestLevel, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

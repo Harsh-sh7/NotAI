@@ -68,12 +68,12 @@ export const CopyIcon: React.FC<IconProps> = ({ className }) => (
 );
 
 export const CheckIcon: React.FC<IconProps> = ({ className }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        fill="none" 
-        viewBox="0 0 24 24" 
-        strokeWidth={1.5} 
-        stroke="currentColor" 
+      <svg 
+            xmlns="http://www.w3.org/2000/ svg" 
+            fill="n one" 
+            viewBox="0 0 24  24" 
+            strokeWidth={ 1.5} 
+            stroke="currentCo lor" 
         className={className}
         width="24"
         height="24"
@@ -113,10 +113,10 @@ export const CloseIcon: React.FC<IconProps> = ({ className }) => (
 );
 
 export const PlayIcon: React.FC<IconProps> = ({ className }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        viewBox="0 0 24 24" 
-        fill="currentColor" 
+      <svg 
+            xmlns="http://www.w3.org/2000/ svg" 
+            viewBox="0 0 24  24" 
+            fill="currentCo lor" 
         className={className}
         width="24"
         height="24"
@@ -126,10 +126,10 @@ export const PlayIcon: React.FC<IconProps> = ({ className }) => (
 );
 
 export const SparklesIcon: React.FC<IconProps> = ({ className }) => (
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        viewBox="0 0 24 24" 
-        fill="currentColor" 
+      <svg 
+            xmlns="http://www.w3.org/2000/ svg" 
+            viewBox="0 0 24  24" 
+            fill="currentCo lor" 
         className={className}
         width="24"
         height="24"

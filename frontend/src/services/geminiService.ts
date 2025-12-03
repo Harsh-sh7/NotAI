@@ -13,15 +13,15 @@ class GeminiService {
   private minRequestInterval: number = 1000; // Minimum 1 second between requests
 
   constructor(apiKey: string) {
-    if (!apiKey) {  
+    if (!apiKey) {
       throw new Error("GEMINI_API_KEY is not available. Please check your environment variables.");
     }
-    
+
     try {
       const genAI = new GoogleGenerativeAI(apiKey);
-      
+
       // Initialize the model with the lite version for better rate limits
-      this.model = genAI.getGenerativeModel({ 
+      this.model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash-lite',
         generationConfig: {
           temperature: 0.7,
@@ -57,32 +57,32 @@ class GeminiService {
     try {
       // Add user message to chat history
       this.chatHistory.push({ role: 'user', parts: message });
-      
+
       // Send message and get response
       const result = await this.chat.sendMessage(message);
       const response = await result.response;
       const responseText = response.text();
-      
+
       // Add model's response to chat history
       this.chatHistory.push({ role: 'model', parts: responseText });
-      
+
       return responseText;
     } catch (error) {
       console.error('Error in sendMessage:', error);
-      
+
       // Handle 429 rate limit with retry
       if (error.message.includes('429') || error.message.includes('Resource exhausted')) {
         if (retryCount < 3) {
           const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
           console.log(`Rate limited. Retrying in ${delay}ms... (attempt ${retryCount + 1}/3)`);
-          
+
           await new Promise(resolve => setTimeout(resolve, delay));
           return this.sendMessage(message, retryCount + 1);
         } else {
           throw new Error('Rate limit exceeded. Please wait a few minutes before trying again.');
         }
       }
-      
+
       // More specific error handling
       if (error.message.includes('quota')) {
         throw new Error('API quota exceeded. Please check your Google Cloud account.');
@@ -93,7 +93,7 @@ class GeminiService {
       } else if (error.message.includes('503') || error.message.includes('overloaded')) {
         throw new Error('Gemini service is temporarily overloaded. Please try again in a few moments.');
       }
-      
+
       throw new Error('Failed to get response from Gemini. Please try again.');
     }
   }
