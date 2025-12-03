@@ -295,6 +295,11 @@ IMPORTANT:
                     .trim();
             }
 
+            // Ensure topic is set (use the one from context if not in response)
+            if (!problemData.topic) {
+                problemData.topic = topic;
+            }
+
             setProblem(problemData);
 
             // Check if user has attempted this problem before
@@ -925,8 +930,8 @@ IMPORTANT:
                     <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 180px)' }}>
                         <div className="prose prose-invert max-w-none">
                             <div className="mb-4">
-                                <span className="inline-block px-3 py-1 bg-accent bg-opacity-20 text-primary-text rounded-full text-sm font-medium">
-                                    {problem.topic}
+                                <span className="inline-block px-3 py-1 bg-accent text-primary rounded-full text-sm font-semibold">
+                                    {problem.topic || 'General'}
                                 </span>
                             </div>
 
