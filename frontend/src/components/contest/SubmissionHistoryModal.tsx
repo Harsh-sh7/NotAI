@@ -12,7 +12,7 @@ interface Submission {
     testCases?: any[];
     attempts?: number;
     lastAttemptedAt?: string;
-}
+ }
 
 interface SubmissionHistoryModalProps {
     submissions: Submission[];
