@@ -18,19 +18,24 @@ type View = 'chat' | 'code' | 'contest';
 type AuthView = 'login' | 'signup';
 
 const MainApp: React.FC = () => {
-  const [view, setView] = useState<View>('chat');
+  const [view, setView] = useState<View>(() => {
+    // Restore last view from localStorage, default to 'chat'
+    const savedView = localStorage.getItem('currentView') as View;
+    return savedView || 'chat';
+  });
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(() => {
+    // Show landing page only if user hasn't visited before
+    const hasVisited = localStorage.getItem('hasVisitedNotAI');
+    return !hasVisited;
+  });
   const { user, logout, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme(); // MUST be called before any conditional returns
 
-  // Check if user has visited before
+  // Save current view to localStorage whenever it changes
   useEffect(() => {
-    const hasVisited = localStorage.getItem('hasVisitedNotAI');
-    if (hasVisited) {
-      setShowLanding(false);
-    }
-  }, []);
+    localStorage.setItem('currentView', view);
+  }, [view]);
 
   const handleGetStarted = () => {
     localStorage.setItem('hasVisitedNotAI', 'true');

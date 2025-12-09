@@ -4,6 +4,11 @@ import { useContest } from '../context/ContestContext';
 import { geminiService } from '../services/geminiService';
 import { CodeEditor } from './CodeEditor';
 import { SparklesIcon, PlayIcon } from './Icons';
+import {
+    ContestDashboard,
+    LoadingOverlay,
+    TopicSelectionModal
+} from './contest/index';
 
 interface ContestProps {
     onAuthRequired: () => void;
@@ -87,6 +92,11 @@ export const Contest: React.FC<ContestProps> = ({ onAuthRequired }) => {
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [showHistory, setShowHistory] = useState(false);
     const [showTopicModal, setShowTopicModal] = useState(false);
+    const [editorHeight, setEditorHeight] = useState(60); // percentage
+    const [isDragging, setIsDragging] = useState(false);
+    const [problemPanelWidth, setProblemPanelWidth] = useState(50); // percentage
+    const [isHorizontalDragging, setIsHorizontalDragging] = useState(false);
+
 
     useEffect(() => {
         // Use user's saved contest level if available
@@ -189,6 +199,71 @@ export const Contest: React.FC<ContestProps> = ({ onAuthRequired }) => {
         return null;
     };
 
+    // Generate clean starter code with only comments
+    const getStarterCode = (lang: string): string => {
+        const starterTemplates: Record<string, string> = {
+            python: `# Read input
+# Write your solution here
+# Print output
+`,
+            javascript: `// Read input
+// Write your solution here
+// Print output
+`,
+            cpp: `#include <iostream>
+using namespace std;
+
+int main() {
+    // Read input
+    // Write your solution here
+    // Print output
+    return 0;
+}`,
+            java: `import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        // Read input
+        // Write your solution here
+        // Print output
+    }
+}`
+        };
+        return starterTemplates[lang] || starterTemplates.python;
+    };
+
+    const handleDifficultyStart = (difficulty: string) => {
+        setProblem(null);
+        setTopic('');
+        setCustomTopic('');
+        setCode('');
+        setOutput('');
+        setError(null);
+        setTestResults([]);
+        setLevel(difficulty);
+        setShowTopicModal(true);
+    };
+
+    const handleSubmissionClick = (submission: Submission) => {
+        setShowHistory(false);
+        setLevel(submission.difficulty);
+        setTopic(submission.topic);
+        setLanguage(submission.language);
+        setCode(submission.code);
+
+        const problemData = {
+            title: submission.problemTitle,
+            description: submission.problemDescription,
+            difficulty: submission.difficulty,
+            topic: submission.topic,
+            testCases: submission.testCases || [],
+            starterCode: { [submission.language]: submission.code },
+            solutionTemplate: {}
+        };
+        setProblem(problemData);
+    };
+
     const handleLevelSelect = async (selectedLevel: string) => {
         if (!user) {
             onAuthRequired();
@@ -233,10 +308,12 @@ export const Contest: React.FC<ContestProps> = ({ onAuthRequired }) => {
 
         const prompt = `Generate a ${level} level DSA problem on the topic: ${topic}.${previousProblemsText}
 
-Please provide the response in the following JSON format (make sure it's valid JSON):
+CRITICAL: You MUST respond with ONLY valid JSON. No markdown, no code blocks, no extra text.
+
+The JSON must follow this EXACT format:
 {
   "title": "Problem Title",
-  "description": "Detailed problem description. DO NOT include examples in the description - they will be shown separately. Use PLAIN TEXT only - no markdown symbols. Explain the problem clearly, specify input format, output format, and constraints.",
+  "description": "Detailed problem description in a SINGLE LINE. Replace all newlines with spaces. DO NOT include examples in the description - they will be shown separately. Use PLAIN TEXT only - no markdown symbols. Explain the problem clearly, specify input format, output format, and constraints.",
   "difficulty": "${level}",
   "topic": "${topic}",
   "testCases": [
@@ -264,26 +341,58 @@ Please provide the response in the following JSON format (make sure it's valid J
   }
 }
 
-IMPORTANT: 
-- Use PLAIN TEXT in the description - NO markdown formatting symbols
-- DO NOT include example test cases in the description - they will be displayed separately below
-- Make the problem clear and well-defined
+STRICT REQUIREMENTS:
+- Return ONLY the JSON object, nothing else
+- The description field MUST be a single line string with no actual newlines
+- Use \\n for newlines in starterCode only
+- NO markdown formatting in description
+- DO NOT include example test cases in the description
 - Test cases should have simple input/output (numbers, strings, arrays as space-separated values)
-- Clearly specify input format, output format, and constraints in the description
-- Output should be a single line
-- Make sure the problem is appropriate for ${level} level and focuses on ${topic}`;
+- Make sure the problem is appropriate for ${level} level and focuses on ${topic}
+- Ensure all strings are properly escaped for JSON`;
 
         try {
             const response = await geminiService.sendMessage(prompt);
 
-            // Extract JSON from the response
-            let jsonStr = response;
-            const jsonMatch = response.match(/\`\`\`json\s*([\s\S]*?)\`\`\`/) || response.match(/\`\`\`\s*([\s\S]*?)\`\`\`/);
+            // Extract JSON from the response - handle various formats
+            let jsonStr = response.trim();
+
+            // Try to extract JSON from markdown code blocks
+            const jsonMatch = jsonStr.match(/```json\s*([\s\S]*?)```/) || jsonStr.match(/```\s*([\s\S]*?)```/);
             if (jsonMatch) {
-                jsonStr = jsonMatch[1];
+                jsonStr = jsonMatch[1].trim();
             }
 
-            const problemData = JSON.parse(jsonStr);
+            // Clean up the JSON string before parsing
+            // First, normalize line endings
+            jsonStr = jsonStr
+                .replace(/\r\n/g, '\n')
+                .replace(/\r/g, '\n');
+
+            // Remove actual newlines within string values (but preserve \n escape sequences)
+            // This regex finds strings and replaces actual newlines with spaces
+            jsonStr = jsonStr.replace(/"([^"]*?)"/g, (match, content) => {
+                // Replace actual newlines in string content with spaces
+                const cleaned = content.replace(/\n/g, ' ');
+                return `"${cleaned}"`;
+            });
+
+            // Remove any remaining control characters except newlines between JSON properties
+            jsonStr = jsonStr.replace(/[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/g, '');
+
+            jsonStr = jsonStr.trim();
+
+            let problemData;
+            try {
+                problemData = JSON.parse(jsonStr);
+            } catch (parseError) {
+                console.error('JSON Parse Error:', parseError);
+                console.error('Full response length:', response.length);
+                console.error('Attempted to parse (first 500 chars):', jsonStr.substring(0, 500));
+                console.error('Last 200 chars:', jsonStr.substring(Math.max(0, jsonStr.length - 200)));
+
+                throw new Error('Failed to parse problem data. The AI response was malformed. Please try generating again.');
+            }
 
             // Clean up the description - remove any markdown formatting that slipped through
             if (problemData.description) {
@@ -307,18 +416,19 @@ IMPORTANT:
 
             if (previousAttempt) {
                 // Load previous code if it exists
-                setCode(previousAttempt.code || problemData.starterCode[language] || '');
+                setCode(previousAttempt.code || getStarterCode(language));
                 setLanguage(previousAttempt.language || language);
 
                 // Show notification that previous attempt was loaded
                 setOutput(`📝 Loaded your previous attempt from ${new Date(previousAttempt.lastAttemptedAt).toLocaleDateString()} `);
                 setActiveTab('output');
             } else {
-                setCode(problemData.starterCode[language] || '');
+                // Always use clean starter code, ignore AI-generated code
+                setCode(getStarterCode(language));
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error generating problem:', err);
-            setError('Failed to generate problem. Please try again.');
+            setError(err.message || 'Failed to generate problem. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -469,7 +579,8 @@ IMPORTANT:
     const handleLanguageChange = (newLanguage: string) => {
         setLanguage(newLanguage);
         if (problem) {
-            setCode(problem.starterCode[newLanguage] || '');
+            // Use clean starter code instead of AI-generated code
+            setCode(getStarterCode(newLanguage));
         }
     };
 
@@ -478,434 +589,167 @@ IMPORTANT:
         setShowLevelModal(true);
     };
 
+    // Use ref to avoid stale closure in event handlers
+    const isDraggingRef = React.useRef(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        console.log('Mouse down - starting drag');
+        isDraggingRef.current = true;
+        setIsDragging(true);
+    };
+
+    const handleMouseMove = React.useCallback((e: MouseEvent) => {
+        if (!isDraggingRef.current) return;
+
+        const container = document.querySelector('.code-editor-container');
+        if (!container) {
+            console.log('Container not found');
+            return;
+        }
+
+        const containerRect = container.getBoundingClientRect();
+        const newHeight = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+
+        console.log('Dragging - newHeight:', newHeight);
+
+        // Constrain between 20% and 80%
+        if (newHeight >= 20 && newHeight <= 80) {
+            setEditorHeight(newHeight);
+        }
+    }, []);
+
+    const handleMouseUp = React.useCallback(() => {
+        console.log('Mouse up - ending drag');
+        isDraggingRef.current = false;
+        setIsDragging(false);
+    }, []);
+
+    useEffect(() => {
+        console.log('isDragging changed to:', isDragging);
+        if (isDragging) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+        } else {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isDragging, handleMouseMove, handleMouseUp]);
+
+    // Horizontal resize handlers
+    const isHorizontalDraggingRef = React.useRef(false);
+
+    const handleHorizontalMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        console.log('Horizontal mouse down - starting drag');
+        isHorizontalDraggingRef.current = true;
+        setIsHorizontalDragging(true);
+    };
+
+    const handleHorizontalMouseMove = React.useCallback((e: MouseEvent) => {
+        if (!isHorizontalDraggingRef.current) return;
+
+        const container = document.querySelector('.contest-container');
+        if (!container) {
+            console.log('Contest container not found');
+            return;
+        }
+
+        const containerRect = container.getBoundingClientRect();
+        const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
+        console.log('Horizontal dragging - newWidth:', newWidth);
+
+        // Constrain between 30% and 70%
+        if (newWidth >= 30 && newWidth <= 70) {
+            setProblemPanelWidth(newWidth);
+        }
+    }, []);
+
+    const handleHorizontalMouseUp = React.useCallback(() => {
+        console.log('Horizontal mouse up - ending drag');
+        isHorizontalDraggingRef.current = false;
+        setIsHorizontalDragging(false);
+    }, []);
+
+    useEffect(() => {
+        console.log('isHorizontalDragging changed to:', isHorizontalDragging);
+        if (isHorizontalDragging) {
+            document.addEventListener('mousemove', handleHorizontalMouseMove);
+            document.addEventListener('mouseup', handleHorizontalMouseUp);
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+        } else {
+            document.removeEventListener('mousemove', handleHorizontalMouseMove);
+            document.removeEventListener('mouseup', handleHorizontalMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleHorizontalMouseMove);
+            document.removeEventListener('mouseup', handleHorizontalMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isHorizontalDragging, handleHorizontalMouseMove, handleHorizontalMouseUp]);
+
+
     // Welcome dashboard (default view)
     if (!problem) {
         return (
-            <div className="h-full w-full overflow-y-auto bg-gradient-to-br from-primary via-primary to-secondary">
-                <div className="max-w-7xl w-full mx-auto p-8 pb-12">
-                    {/* Hero Section */}
-                    <div className="mb-12">
-                        <h1 className="text-5xl font-bold text-primary-text mb-3 tracking-tight">
-                            Contest Arena
-                        </h1>
-                        <p className="text-xl text-secondary-text">
-                            {user?.contestLevel
-                                ? `Challenge yourself with ${user.contestLevel} level problems`
-                                : 'Set your skill level in profile settings to get started'}
-                        </p>
-                    </div>
-
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                        <div className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-accent/50 transition-all duration-300">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-secondary-text mb-1">Problems Solved</p>
-                                    <p className="text-4xl font-bold text-primary-text">{submissions.filter(s => s.solved).length}</p>
-                                </div>
-                                <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
-                                    <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-accent/50 transition-all duration-300">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-secondary-text mb-1">Total Attempts</p>
-                                    <p className="text-4xl font-bold text-primary-text">{submissions.length}</p>
-                                </div>
-                                <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center">
-                                    <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-accent/50 transition-all duration-300">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-secondary-text mb-1">Success Rate</p>
-                                    <p className="text-4xl font-bold text-primary-text">
-                                        {submissions.length > 0
-                                            ? Math.round((submissions.filter(s => s.solved).length / submissions.length) * 100)
-                                            : 0}%
-                                    </p>
-                                </div>
-                                <div className="w-14 h-14 rounded-full bg-purple-500/10 flex items-center justify-center">
-                                    <svg className="w-7 h-7 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Difficulty Levels - Takes 2 columns */}
-                        <div className="lg:col-span-2">
-                            <h2 className="text-2xl font-bold text-primary-text mb-6">Choose Your Challenge</h2>
-
-                            <div className="space-y-4">
-                                {/* Beginner */}
-                                {user ? (
-                                    <div className="group bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                                                    <span className="text-lg font-bold text-green-500">B</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-primary-text">Beginner</h3>
-                                                    <p className="text-sm text-secondary-text">
-                                                        {submissions.filter(s => s.difficulty === 'Beginner' && s.solved).length} / {submissions.filter(s => s.difficulty === 'Beginner').length} solved
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    setProblem(null);
-                                                    setTopic('');
-                                                    setCustomTopic('');
-                                                    setCode('');
-                                                    setOutput('');
-                                                    setError(null);
-                                                    setTestResults([]);
-                                                    setLevel('Beginner');
-                                                    setShowTopicModal(true);
-                                                }}
-                                                className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-all duration-300 hover:scale-105"
-                                            >
-                                                Start
-                                            </button>
-                                        </div>
-                                        <div className="h-2 bg-primary/50 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
-                                                style={{
-                                                    width: `${submissions.filter(s => s.difficulty === 'Beginner').length > 0
-                                                        ? (submissions.filter(s => s.difficulty === 'Beginner' && s.solved).length / submissions.filter(s => s.difficulty === 'Beginner').length) * 100
-                                                        : 0
-                                                        }%`
-                                                }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                                                    <span className="text-lg font-bold text-green-500">B</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-primary-text">Beginner</h3>
-                                                    <p className="text-sm text-secondary-text">Sign in to track progress</p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={onAuthRequired}
-                                                className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-all duration-300"
-                                            >
-                                                Sign In
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Intermediate */}
-                                {user ? (
-                                    <div className="group bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                                                    <span className="text-lg font-bold text-yellow-500">I</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-primary-text">Intermediate</h3>
-                                                    <p className="text-sm text-secondary-text">
-                                                        {submissions.filter(s => s.difficulty === 'Intermediate' && s.solved).length} / {submissions.filter(s => s.difficulty === 'Intermediate').length} solved
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    setProblem(null);
-                                                    setTopic('');
-                                                    setCustomTopic('');
-                                                    setCode('');
-                                                    setOutput('');
-                                                    setError(null);
-                                                    setTestResults([]);
-                                                    setLevel('Intermediate');
-                                                    setShowTopicModal(true);
-                                                }}
-                                                className="px-6 py-2.5 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-all duration-300 hover:scale-105"
-                                            >
-                                                Start
-                                            </button>
-                                        </div>
-                                        <div className="h-2 bg-primary/50 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 transition-all duration-500"
-                                                style={{
-                                                    width: `${submissions.filter(s => s.difficulty === 'Intermediate').length > 0
-                                                        ? (submissions.filter(s => s.difficulty === 'Intermediate' && s.solved).length / submissions.filter(s => s.difficulty === 'Intermediate').length) * 100
-                                                        : 0
-                                                        }%`
-                                                }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                                                    <span className="text-lg font-bold text-yellow-500">I</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-primary-text">Intermediate</h3>
-                                                    <p className="text-sm text-secondary-text">Sign in to track progress</p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={onAuthRequired}
-                                                className="px-6 py-2.5 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-all duration-300"
-                                            >
-                                                Sign In
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Expert */}
-                                {user ? (
-                                    <div className="group bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-red-500/50 hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                                                    <span className="text-lg font-bold text-red-500">E</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-primary-text">Expert</h3>
-                                                    <p className="text-sm text-secondary-text">
-                                                        {submissions.filter(s => s.difficulty === 'Expert' && s.solved).length} / {submissions.filter(s => s.difficulty === 'Expert').length} solved
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    setProblem(null);
-                                                    setTopic('');
-                                                    setCustomTopic('');
-                                                    setCode('');
-                                                    setOutput('');
-                                                    setError(null);
-                                                    setTestResults([]);
-                                                    setLevel('Expert');
-                                                    setShowTopicModal(true);
-                                                }}
-                                                className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-all duration-300 hover:scale-105"
-                                            >
-                                                Start
-                                            </button>
-                                        </div>
-                                        <div className="h-2 bg-primary/50 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-500"
-                                                style={{
-                                                    width: `${submissions.filter(s => s.difficulty === 'Expert').length > 0
-                                                        ? (submissions.filter(s => s.difficulty === 'Expert' && s.solved).length / submissions.filter(s => s.difficulty === 'Expert').length) * 100
-                                                        : 0
-                                                        }%`
-                                                }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                                                    <span className="text-lg font-bold text-red-500">E</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-lg font-semibold text-primary-text">Expert</h3>
-                                                    <p className="text-sm text-secondary-text">Sign in to track progress</p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={onAuthRequired}
-                                                className="px-6 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-all duration-300"
-                                            >
-                                                Sign In
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Recent Submissions - Takes 1 column */}
-                        {user && submissions.length > 0 && (
-                            <div className="lg:col-span-1">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-2xl font-bold text-primary-text">Recent Activity</h2>
-                                    <button
-                                        onClick={() => setShowHistory(true)}
-                                        className="text-sm text-accent hover:text-accent/80 font-medium transition-colors"
-                                    >
-                                        View All
-                                    </button>
-                                </div>
-
-                                <div className="space-y-3">
-                                    {submissions.slice(0, 5).map((submission) => (
-                                        <div
-                                            key={submission._id}
-                                            className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-lg p-4 hover:border-accent/50 transition-all duration-300 cursor-pointer group"
-                                            onClick={() => {
-                                                setShowHistory(false);
-                                                setLevel(submission.difficulty);
-                                                setTopic(submission.topic);
-                                                setLanguage(submission.language);
-                                                setCode(submission.code);
-
-                                                const problemData = {
-                                                    title: submission.problemTitle,
-                                                    description: submission.problemDescription,
-                                                    difficulty: submission.difficulty,
-                                                    topic: submission.topic,
-                                                    testCases: submission.testCases || [],
-                                                    starterCode: { [submission.language]: submission.code },
-                                                    solutionTemplate: {}
-                                                };
-                                                setProblem(problemData);
-                                            }}
-                                        >
-                                            <div className="flex items-start justify-between mb-2">
-                                                <h3 className="font-semibold text-primary-text text-sm group-hover:text-accent transition-colors line-clamp-1">
-                                                    {submission.problemTitle}
-                                                </h3>
-                                                {submission.solved && (
-                                                    <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2 text-xs text-secondary-text">
-                                                <span className={`px-2 py-0.5 rounded ${submission.difficulty === 'Beginner' ? 'bg-green-500/10 text-green-500' :
-                                                    submission.difficulty === 'Intermediate' ? 'bg-yellow-500/10 text-yellow-500' :
-                                                        'bg-red-500/10 text-red-500'
-                                                    }`}>
-                                                    {submission.difficulty}
-                                                </span>
-                                                <span>•</span>
-                                                <span>{submission.topic}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
+            <div className="h-full w-full flex flex-col overflow-hidden">
+                <ContestDashboard
+                    user={user}
+                    submissions={submissions}
+                    onDifficultyStart={handleDifficultyStart}
+                    onSubmissionClick={handleSubmissionClick}
+                    onViewHistory={() => setShowHistory(true)}
+                    onAuthRequired={onAuthRequired}
+                />
 
                 {/* Topic Selection Modal */}
                 {showTopicModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-                        <div className="bg-secondary border-2 border-border rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-scale-in">
-                            <div className="p-6 border-b-2 border-border flex items-center justify-between sticky top-0 bg-secondary z-10">
-                                <h2 className="text-2xl font-bold text-primary-text">
-                                    Select Topic for {level} Contest
-                                </h2>
-                                <button
-                                    onClick={() => {
-                                        setShowTopicModal(false);
-                                        setLevel('');
-                                        setTopic('');
-                                        setCustomTopic('');
-                                    }}
-                                    className="p-2 hover:bg-primary rounded-lg transition-all"
-                                >
-                                    <svg className="w-6 h-6 text-secondary-text hover:text-primary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
+                    <TopicSelectionModal
+                        level={level || ''}
+                        topic={topic}
+                        customTopic={customTopic}
+                        language={language}
+                        isLoading={isLoading}
+                        error={error}
+                        onTopicSelect={setTopic}
+                        onCustomTopicChange={(value) => {
+                            setCustomTopic(value);
+                            setTopic(value);
+                        }}
+                        onLanguageChange={handleLanguageChange}
+                        onGenerate={() => {
+                            setShowTopicModal(false);
+                            handleGenerateProblem();
+                        }}
+                        onClose={() => {
+                            setShowTopicModal(false);
+                            setLevel('');
+                            setTopic('');
+                            setCustomTopic('');
+                        }}
+                    />
+                )}
 
-                            <div className="p-6">
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-                                    {DSA_TOPICS.map((t) => (
-                                        <button
-                                            key={t}
-                                            onClick={() => setTopic(t)}
-                                            className={`p-4 rounded-lg border-2 transition-all duration-300 font-medium ${topic === t
-                                                ? 'bg-accent text-primary border-accent shadow-lg'
-                                                : 'bg-primary text-primary-text border-border hover:border-accent'
-                                                }`}
-                                        >
-                                            {t}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="mb-6">
-                                    <label className="block text-sm font-medium text-secondary-text mb-2">
-                                        Or enter a custom topic:
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={customTopic}
-                                        onChange={(e) => {
-                                            setCustomTopic(e.target.value);
-                                            setTopic(e.target.value);
-                                        }}
-                                        placeholder="e.g., Binary Search Trees"
-                                        className="w-full bg-primary border-2 border-border rounded-lg px-4 py-3 text-primary-text focus:outline-none focus:border-accent transition-all"
-                                    />
-                                </div>
-
-                                <div className="mb-6">
-                                    <label className="block text-sm font-medium text-secondary-text mb-2">
-                                        Programming Language:
-                                    </label>
-                                    <select
-                                        value={language}
-                                        onChange={(e) => handleLanguageChange(e.target.value)}
-                                        className="w-full bg-primary border-2 border-border rounded-lg px-4 py-3 text-primary-text focus:outline-none focus:border-accent transition-all"
-                                    >
-                                        <option value="python">Python</option>
-                                        <option value="javascript">JavaScript</option>
-                                        <option value="cpp">C++</option>
-                                        <option value="java">Java</option>
-                                    </select>
-                                </div>
-
-                                <button
-                                    onClick={() => {
-                                        setShowTopicModal(false);
-                                        handleGenerateProblem();
-                                    }}
-                                    disabled={isLoading || !topic.trim()}
-                                    className="w-full px-6 py-4 bg-accent text-primary rounded-lg font-semibold hover:opacity-80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                    <SparklesIcon className="w-5 h-5" />
-                                    {isLoading ? 'Generating...' : 'Generate Problem'}
-                                </button>
-
-                                {error && (
-                                    <div className="mt-4 p-4 bg-red-500 bg-opacity-10 border-2 border-red-500 rounded-lg">
-                                        <p className="text-red-500 text-sm">{error}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                {/* Loading Overlay */}
+                {isLoading && (
+                    <LoadingOverlay level={level || ''} topic={topic} />
                 )}
             </div>
         );
@@ -914,9 +758,9 @@ IMPORTANT:
     // Contest problem view
     if (problem) {
         return (
-            <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row h-full overflow-hidden contest-container">
                 {/* Problem Description Panel */}
-                <div className="w-full md:w-1/2 h-full border-r-2 border-border flex flex-col">
+                <div className="h-full flex flex-col" style={{ width: `${problemPanelWidth}%`, flexShrink: 0 }}>
                     <div className="p-4 border-b-2 border-border bg-secondary flex items-center justify-between flex-shrink-0">
                         <h2 className="text-xl font-bold text-primary-text">{problem.title}</h2>
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${problem.difficulty === 'Beginner' ? 'bg-green-500 bg-opacity-20 text-green-500' :
@@ -960,8 +804,21 @@ IMPORTANT:
                     </div>
                 </div>
 
+                {/* Horizontal Resize Handle */}
+                <div
+                    onMouseDown={handleHorizontalMouseDown}
+                    className={`group relative w-1 bg-border hover:bg-accent/50 cursor-ew-resize flex-shrink-0 transition-all duration-200 ${isHorizontalDragging ? 'bg-accent' : ''}`}
+                    style={{ minWidth: '4px' }}
+                >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className={`h-16 w-0.5 rounded-full transition-all duration-200 ${isHorizontalDragging ? 'bg-accent h-24' : 'bg-secondary-text/40 group-hover:bg-accent/70 group-hover:h-20'}`}></div>
+                    </div>
+                    {/* Invisible larger hit area for easier grabbing */}
+                    <div className="absolute inset-y-0 -left-2 -right-2"></div>
+                </div>
+
                 {/* Code Editor Panel */}
-                <div className="w-full md:w-1/2 h-full flex flex-col">
+                <div className="h-full flex flex-col code-editor-container" style={{ width: `${100 - problemPanelWidth}%`, flexShrink: 0 }}>
                     <div className="p-3 border-b-2 border-border bg-secondary flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
                         <select
                             value={language}
@@ -1002,83 +859,106 @@ IMPORTANT:
                         </div>
                     </div>
 
-                    <div className="flex-1 min-h-0" style={{ height: 'calc(60vh - 120px)' }}>
-                        <CodeEditor
-                            code={code}
-                            setCode={setCode}
-                            language={language}
-                            onSelectionChange={() => { }}
-                        />
-                    </div>
-
-                    {/* Console */}
-                    <div className="h-64 flex-shrink-0 border-t-2 border-border bg-secondary flex flex-col">
-                        <div className="flex items-center border-b-2 border-border flex-shrink-0">
-                            <button
-                                onClick={() => setActiveTab('input')}
-                                className={`px-4 py-2 text-sm font-semibold transition-all ${activeTab === 'input'
-                                    ? 'bg-primary text-primary-text border-b-2 border-accent'
-                                    : 'text-secondary-text hover:text-primary-text'
-                                    }`}
-                            >
-                                Input
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('output')}
-                                className={`px-4 py-2 text-sm font-semibold transition-all ${activeTab === 'output'
-                                    ? 'bg-primary text-primary-text border-b-2 border-accent'
-                                    : 'text-secondary-text hover:text-primary-text'
-                                    }`}
-                            >
-                                Output
-                            </button>
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <style>{`
+                            .contest-code-editor > div {
+                                height: 100% !important;
+                                max-height: none !important;
+                            }
+                        `}</style>
+                        <div className="overflow-hidden" style={{ height: `${editorHeight}%`, flexShrink: 0 }}>
+                            <div className="contest-code-editor" style={{ height: '100%' }}>
+                                <CodeEditor
+                                    code={code}
+                                    setCode={setCode}
+                                    language={language}
+                                    onSelectionChange={() => { }}
+                                />
+                            </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4">
-                            {activeTab === 'input' ? (
-                                <textarea
-                                    value={userInput}
-                                    onChange={(e) => setUserInput(e.target.value)}
-                                    placeholder="Enter custom input for testing..."
-                                    className="w-full h-full bg-primary border-2 border-border rounded-lg p-3 text-sm font-mono text-primary-text placeholder-secondary-text focus:outline-none focus:border-accent resize-none"
-                                />
-                            ) : (
-                                <div className="text-sm font-mono">
-                                    {output && (
-                                        <div className="text-primary-text whitespace-pre-wrap mb-4">
-                                            {output}
-                                        </div>
-                                    )}
+                        {/* Resize Handle */}
+                        <div
+                            onMouseDown={handleMouseDown}
+                            className={`group relative h-1 bg-border hover:bg-accent/50 cursor-ns-resize flex-shrink-0 transition-all duration-200 ${isDragging ? 'bg-accent' : ''}`}
+                            style={{ minHeight: '4px' }}
+                        >
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className={`w-16 h-0.5 rounded-full transition-all duration-200 ${isDragging ? 'bg-accent w-24' : 'bg-secondary-text/40 group-hover:bg-accent/70 group-hover:w-20'}`}></div>
+                            </div>
+                            {/* Invisible larger hit area for easier grabbing */}
+                            <div className="absolute inset-x-0 -top-2 -bottom-2"></div>
+                        </div>
 
-                                    {error && (
-                                        <div className="text-red-500 whitespace-pre-wrap mb-4">
-                                            {error}
-                                        </div>
-                                    )}
+                        {/* Console */}
+                        <div className="bg-secondary flex flex-col overflow-hidden" style={{ height: `${100 - editorHeight}%`, flexShrink: 0 }}>
+                            <div className="flex items-center border-b-2 border-border flex-shrink-0">
+                                <button
+                                    onClick={() => setActiveTab('input')}
+                                    className={`px-4 py-2 text-sm font-semibold transition-all ${activeTab === 'input'
+                                        ? 'bg-primary text-primary-text border-b-2 border-accent'
+                                        : 'text-secondary-text hover:text-primary-text'
+                                        }`}
+                                >
+                                    Input
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('output')}
+                                    className={`px-4 py-2 text-sm font-semibold transition-all ${activeTab === 'output'
+                                        ? 'bg-primary text-primary-text border-b-2 border-accent'
+                                        : 'text-secondary-text hover:text-primary-text'
+                                        }`}
+                                >
+                                    Output
+                                </button>
+                            </div>
 
-                                    {testResults.length > 0 && (
-                                        <div className="space-y-2">
-                                            {testResults.map((result, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    className={`p-3 rounded-lg border-2 ${result.passed
-                                                        ? 'bg-green-500 bg-opacity-10 border-green-500 text-green-500'
-                                                        : 'bg-red-500 bg-opacity-10 border-red-500 text-red-500'
-                                                        }`}
-                                                >
-                                                    <pre className="whitespace-pre-wrap text-xs">{result.message}</pre>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                            <div className="flex-1 overflow-y-auto p-4">
+                                {activeTab === 'input' ? (
+                                    <textarea
+                                        value={userInput}
+                                        onChange={(e) => setUserInput(e.target.value)}
+                                        placeholder="Enter custom input for testing..."
+                                        className="w-full h-full bg-primary border-2 border-border rounded-lg p-3 text-sm font-mono text-primary-text placeholder-secondary-text focus:outline-none focus:border-accent resize-none"
+                                    />
+                                ) : (
+                                    <div className="text-sm font-mono">
+                                        {output && (
+                                            <div className="text-primary-text whitespace-pre-wrap mb-4">
+                                                {output}
+                                            </div>
+                                        )}
 
-                                    {!output && !error && testResults.length === 0 && (
-                                        <div className="text-secondary-text">
-                                            Run your code or submit to see results here...
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        {error && (
+                                            <div className="text-red-500 whitespace-pre-wrap mb-4">
+                                                {error}
+                                            </div>
+                                        )}
+
+                                        {testResults.length > 0 && (
+                                            <div className="space-y-2">
+                                                {testResults.map((result, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className={`p-3 rounded-lg border-2 ${result.passed
+                                                            ? 'bg-green-500 bg-opacity-10 border-green-500 text-green-500'
+                                                            : 'bg-red-500 bg-opacity-10 border-red-500 text-red-500'
+                                                            }`}
+                                                    >
+                                                        <pre className="whitespace-pre-wrap text-xs">{result.message}</pre>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {!output && !error && testResults.length === 0 && (
+                                            <div className="text-secondary-text">
+                                                Run your code or submit to see results here...
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

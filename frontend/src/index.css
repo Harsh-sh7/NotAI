@@ -384,6 +384,10 @@ html {
   }
 }
 
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+
 /* Focus Styles */
 *:focus {
   outline: 2px solid var(--color-accent);

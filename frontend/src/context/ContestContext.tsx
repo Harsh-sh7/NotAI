@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
 interface TestCase {
@@ -50,11 +50,27 @@ const ContestContext = createContext<ContestContextType | undefined>(undefined);
 export const ContestProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user } = useAuth();
 
-    const [level, setLevel] = useState<string | null>(null);
-    const [topic, setTopic] = useState<string>('');
-    const [language, setLanguage] = useState<string>('python');
-    const [problem, setProblem] = useState<Problem | null>(null);
-    const [code, setCode] = useState<string>('');
+    // Initialize state from localStorage if available
+    const [level, setLevel] = useState<string | null>(() => {
+        const saved = localStorage.getItem('contestLevel');
+        return saved || null;
+    });
+    const [topic, setTopic] = useState<string>(() => {
+        const saved = localStorage.getItem('contestTopic');
+        return saved || '';
+    });
+    const [language, setLanguage] = useState<string>(() => {
+        const saved = localStorage.getItem('contestLanguage');
+        return saved || 'python';
+    });
+    const [problem, setProblem] = useState<Problem | null>(() => {
+        const saved = localStorage.getItem('contestProblem');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [code, setCode] = useState<string>(() => {
+        const saved = localStorage.getItem('contestCode');
+        return saved || '';
+    });
     const [userInput, setUserInput] = useState<string>('');
     const [output, setOutput] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
@@ -62,6 +78,35 @@ export const ContestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [isExecuting, setIsExecuting] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<'input' | 'output'>('input');
     const [testResults, setTestResults] = useState<{ passed: boolean; message: string }[]>([]);
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        if (level) {
+            localStorage.setItem('contestLevel', level);
+        } else {
+            localStorage.removeItem('contestLevel');
+        }
+    }, [level]);
+
+    useEffect(() => {
+        localStorage.setItem('contestTopic', topic);
+    }, [topic]);
+
+    useEffect(() => {
+        localStorage.setItem('contestLanguage', language);
+    }, [language]);
+
+    useEffect(() => {
+        if (problem) {
+            localStorage.setItem('contestProblem', JSON.stringify(problem));
+        } else {
+            localStorage.removeItem('contestProblem');
+        }
+    }, [problem]);
+
+    useEffect(() => {
+        localStorage.setItem('contestCode', code);
+    }, [code]);
 
     const clearContest = () => {
         setLevel(null);
@@ -76,6 +121,13 @@ export const ContestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsExecuting(false);
         setActiveTab('input');
         setTestResults([]);
+
+        // Clear localStorage
+        localStorage.removeItem('contestLevel');
+        localStorage.removeItem('contestTopic');
+        localStorage.removeItem('contestLanguage');
+        localStorage.removeItem('contestProblem');
+        localStorage.removeItem('contestCode');
     };
 
     return (
