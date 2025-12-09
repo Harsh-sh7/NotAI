@@ -342,14 +342,21 @@ The JSON must follow this EXACT format:
   }
 }
 
-STRICT REQUIREMENTS:
+STRICT REQUIREMENTS FOR TEST CASES:
 - Return ONLY the JSON object, nothing else
 - The description field MUST be a single line string with no actual newlines
 - Use \\n for newlines in starterCode only
 - NO markdown formatting in description
 - DO NOT include example test cases in the description
-- Test cases should have simple input/output (numbers, strings, arrays as space-separated values)
+- Test cases MUST have EXACT, PRECISE expected outputs
+- expectedOutput should contain ONLY the final answer with NO extra text, spaces, or formatting
+- For numeric outputs: just the number (e.g., "42" not "The answer is 42" or "42 ")
+- For string outputs: just the string with no quotes or extra characters
+- For array/list outputs: space-separated values on a single line (e.g., "1 2 3 4")
+- Input format should match what a user would type in stdin (numbers, strings, space-separated values)
 - Make sure the problem is appropriate for ${level} level and focuses on ${topic}
+- Ensure all test cases are CORRECT and the expected outputs are EXACTLY what a correct solution would produce
+- Double-check your test cases - incorrect test cases frustrate users!
 - Ensure all strings are properly escaped for JSON`;
 
         try {
@@ -532,8 +539,19 @@ STRICT REQUIREMENTS:
                 const result = await executeCode(code, testCase.input);
 
                 if (result.success) {
-                    const actualOutput = result.output?.trim() || '';
-                    const expectedOutput = testCase.expectedOutput.trim();
+                    // Normalize outputs for comparison
+                    const normalizeOutput = (str: string) => {
+                        return str
+                            .trim()                          // Remove leading/trailing whitespace
+                            .replace(/\r\n/g, '\n')          // Normalize line endings
+                            .replace(/\r/g, '\n')            // Normalize line endings
+                            .replace(/\s+$/gm, '')           // Remove trailing whitespace from each line
+                            .replace(/^\s+/gm, '')           // Remove leading whitespace from each line
+                            .replace(/\n+/g, '\n');          // Normalize multiple newlines to single
+                    };
+
+                    const actualOutput = normalizeOutput(result.output || '');
+                    const expectedOutput = normalizeOutput(testCase.expectedOutput);
 
                     if (actualOutput === expectedOutput) {
                         results.push({
