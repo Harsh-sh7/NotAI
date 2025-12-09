@@ -5,3 +5,4 @@ export { DifficultyCard } from './DifficultyCard';
 export { ContestDashboard } from './ContestDashboard';
 export { LoadingOverlay } from './LoadingOverlay';
 export { TopicSelectionModal } from './TopicSelectionModal';
+export { SubmissionHistoryModal } from './SubmissionHistoryModal';

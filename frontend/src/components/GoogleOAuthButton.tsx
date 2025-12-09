@@ -5,14 +5,14 @@ interface GoogleOAuthButtonProps {
   className?: string;
 }
 
-export const GoogleOAuthButton: React.FC<GoogleOAuthButtonProps> = ({ 
+export const GoogleOAuthButton: React.FC<GoogleOAuthButtonProps> = ({
   text = "Continue with Google",
   className = ""
 }) => {
   const handleGoogleLogin = () => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
     const oauthUrl = `${API_URL}/api/auth/google`;
-    
+
     window.location.href = oauthUrl;
   };
 
