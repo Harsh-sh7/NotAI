@@ -63,6 +63,29 @@ app.post('/execute', async (req, res) => {
         return res.status(400).json({ error: 'Language and code are required.' });
     }
 
+    // Security constraints for dangerous operations
+    if (language === 'python') {
+        const forbiddenPatterns = [
+            /import\s+os\b/, /from\s+os\s+import/,
+            /import\s+subprocess\b/, /from\s+subprocess\s+import/,
+            /import\s+sys\b/, /from\s+sys\s+import/,
+            /import\s+pty\b/,
+            /import\s+shutil\b/,
+            /__import__\(/,
+            /eval\(/, /exec\(/,
+            /open\(/
+        ];
+        
+        for (const pattern of forbiddenPatterns) {
+            if (pattern.test(code)) {
+                return res.status(403).json({ 
+                    error: 'Security Error: You are trying to use restricted modules or functions.',
+                    details: 'For security reasons, operations containing system commands, file system access, or module execution (e.g., os, subprocess, eval, open, sys) are disabled in this sandbox environment.'
+                });
+            }
+        }
+    }
+
     const languageId = LANGUAGE_IDS[language];
     if (!languageId) {
         return res.status(400).json({ error: `Language '${language}' is not supported.` });
