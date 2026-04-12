@@ -126,6 +126,28 @@ app.post('/execute', async (req, res) => {
         };
 
         result = await poll();
+
+        // Interpret Judge0 unclear error statuses gracefully
+        const statusId = result.status?.id;
+        const stderr = result.stderr || '';
+        
+        if (statusId === 5) { // Time Limit Exceeded
+            result.stderr = 'Timeout exceeded: Your process was terminated because it took too long (possible infinite loop).';
+        } else if (statusId === 8 || stderr.includes('File too large') || stderr.includes('Errno 27')) {
+            // Usually happens when print statements are inside an infinite loop causing SIGXFSZ limit (file size limits)
+            result.stderr = 'Output Limit Exceeded: Your code generated too much output (likely an infinite loop containing print statements).';
+            if (result.status) {
+                result.status.description = 'Output Limit Exceeded';
+            }
+        } else if (stderr.includes('137') || stderr.includes('Killed')) {
+            // Exit code 137 or 'Killed' in stderr usually signifies OOM (Memory Limit Exceeded)
+            // or a hard timeout that triggered SIGKILL.
+            result.stderr = 'Memory limit exceeded (or process killed abruptly). Your code may contain an infinite loop or append too many objects to memory.';
+            if (result.status) {
+                result.status.description = 'Process Killed (Memory Limits / Timeout)';
+            }
+        }
+
         res.json(result);
 
     } catch (error) {
