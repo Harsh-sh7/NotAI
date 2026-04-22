@@ -97,9 +97,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
             {/* Divider */}
             <div className="flex items-center my-4">
-              <div className="flex-1 border-t-2 border-white/20"></div>
+              <div className="flex-1 border-t border-white/20"></div>
               <span className="px-3 text-primary-text text-sm">or</span>
-              <div className="flex-1 border-t-2 border-white/20"></div>
+              <div className="flex-1 border-t border-white/20"></div>
             </div>
 
             {/* Form */}
@@ -113,7 +113,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border-2 border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-primary-text placeholder-primary-text backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-primary-text placeholder-primary-text backdrop-blur-sm"
                     placeholder="Enter your username"
                     required
                   />
@@ -128,7 +128,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border-2 border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-primary-text placeholder-primary-text backdrop-blur-sm"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-primary-text placeholder-primary-text backdrop-blur-sm"
                   placeholder="Enter your email"
                   required
                 />
@@ -142,7 +142,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border-2 border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-primary-text placeholder-primary-text backdrop-blur-sm"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent text-primary-text placeholder-primary-text backdrop-blur-sm"
                   placeholder="Enter your password"
                   required
                   minLength={6}

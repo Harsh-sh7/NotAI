@@ -48,8 +48,8 @@ export const TopicSelectionModal: React.FC<TopicSelectionModalProps> = ({
 }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-secondary border-2 border-border rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-scale-in">
-                <div className="p-6 border-b-2 border-border flex items-center justify-between sticky top-0 bg-secondary z-10">
+            <div className="bg-secondary border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-scale-in">
+                <div className="p-6 border-b border-border flex items-center justify-between sticky top-0 bg-secondary z-10">
                     <h2 className="text-2xl font-bold text-primary-text">
                         Select Topic for {level} Contest
                     </h2>
@@ -69,7 +69,7 @@ export const TopicSelectionModal: React.FC<TopicSelectionModalProps> = ({
                             <button
                                 key={t}
                                 onClick={() => onTopicSelect(t)}
-                                className={`p-4 rounded-lg border-2 transition-all duration-300 font-medium ${topic === t
+                                className={`p-4 rounded-lg border transition-all duration-300 font-medium ${topic === t
                                         ? 'bg-accent text-primary border-accent shadow-lg'
                                         : 'bg-primary text-primary-text border-border hover:border-accent'
                                     }`}
@@ -88,7 +88,7 @@ export const TopicSelectionModal: React.FC<TopicSelectionModalProps> = ({
                             value={customTopic}
                             onChange={(e) => onCustomTopicChange(e.target.value)}
                             placeholder="e.g., Binary Search Trees"
-                            className="w-full bg-primary border-2 border-border rounded-lg px-4 py-3 text-primary-text focus:outline-none focus:border-accent transition-all"
+                            className="w-full bg-primary border border-border rounded-lg px-4 py-3 text-primary-text focus:outline-none focus:border-accent transition-all"
                         />
                     </div>
 
@@ -99,7 +99,7 @@ export const TopicSelectionModal: React.FC<TopicSelectionModalProps> = ({
                         <select
                             value={language}
                             onChange={(e) => onLanguageChange(e.target.value)}
-                            className="w-full bg-primary border-2 border-border rounded-lg px-4 py-3 text-primary-text focus:outline-none focus:border-accent transition-all"
+                            className="w-full bg-primary border border-border rounded-lg px-4 py-3 text-primary-text focus:outline-none focus:border-accent transition-all"
                         >
                             <option value="python">Python</option>
                             <option value="javascript">JavaScript</option>
@@ -118,7 +118,7 @@ export const TopicSelectionModal: React.FC<TopicSelectionModalProps> = ({
                     </button>
 
                     {error && (
-                        <div className="mt-4 p-4 bg-red-500 bg-opacity-10 border-2 border-red-500 rounded-lg">
+                        <div className="mt-4 p-4 bg-red-500 bg-opacity-10 border border-red-500 rounded-lg">
                             <p className="text-red-500 text-sm">{error}</p>
                         </div>
                     )}

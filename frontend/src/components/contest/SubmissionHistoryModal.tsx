@@ -27,8 +27,8 @@ export const SubmissionHistoryModal: React.FC<SubmissionHistoryModalProps> = ({
 }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-secondary border-2 border-border rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-scale-in flex flex-col">
-                <div className="p-6 border-b-2 border-border flex items-center justify-between flex-shrink-0">
+            <div className="bg-secondary border border-border rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-scale-in flex flex-col">
+                <div className="p-6 border-b border-border flex items-center justify-between flex-shrink-0">
                     <h2 className="text-2xl font-bold text-primary-text">Your Submission History</h2>
                     <button
                         onClick={onClose}
@@ -51,7 +51,7 @@ export const SubmissionHistoryModal: React.FC<SubmissionHistoryModalProps> = ({
                             {submissions.map((submission) => (
                                 <div
                                     key={submission._id}
-                                    className="p-4 bg-primary border-2 border-border rounded-lg hover:border-accent transition-all cursor-pointer"
+                                    className="p-4 bg-primary border border-border rounded-lg hover:border-accent transition-all cursor-pointer"
                                     onClick={() => onSubmissionClick(submission)}
                                 >
                                     <div className="flex items-start justify-between mb-2">

@@ -83,9 +83,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-[#F5F1E8] border-2 border-gray-200 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-scale-in flex flex-col">
+            <div className="bg-[#F5F1E8] border border-gray-200 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-scale-in flex flex-col">
                 {/* Header */}
-                <div className="p-6 border-b-2 border-gray-200 flex items-center justify-between flex-shrink-0 bg-white">
+                <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0 bg-white">
                     <h2 className="text-2xl font-bold text-gray-800">Leaderboard</h2>
                     <button
                         onClick={onClose}
@@ -98,14 +98,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
                 </div>
 
                 {/* Difficulty Filters */}
-                <div className="p-4 border-b-2 border-gray-200 flex gap-3 overflow-x-auto flex-shrink-0 bg-white">
+                <div className="p-4 border-b border-gray-200 flex gap-3 overflow-x-auto flex-shrink-0 bg-white">
                     {['All', 'Beginner', 'Intermediate', 'Expert'].map((difficulty) => (
                         <button
                             key={difficulty}
                             onClick={() => setSelectedDifficulty(difficulty)}
                             className={`px-6 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap ${selectedDifficulty === difficulty
                                 ? 'bg-gray-800 text-white shadow-md'
-                                : 'bg-white text-gray-600 hover:text-gray-800 border-2 border-gray-200 hover:border-gray-300'
+                                : 'bg-white text-gray-600 hover:text-gray-800 border border-gray-200 hover:border-gray-300'
                                 }`}
                         >
                             {difficulty}
@@ -211,14 +211,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
                                     return (
                                         <div
                                             key={entry._id}
-                                            className={`p-5 rounded-2xl border-2 transition-all shadow-sm hover:shadow-md ${isCurrentUser
+                                            className={`p-5 rounded-2xl border transition-all shadow-sm hover:shadow-md ${isCurrentUser
                                                 ? 'bg-accent bg-opacity-10 border-accent'
                                                 : `bg-white ${colors.border}`
                                                 }`}
                                         >
                                             <div className="flex items-center gap-4">
                                                 {/* Avatar */}
-                                                <div className={`w-14 h-14 rounded-full ${colors.bg} border-2 ${colors.border} flex items-center justify-center flex-shrink-0`}>
+                                                <div className={`w-14 h-14 rounded-full ${colors.bg} border ${colors.border} flex items-center justify-center flex-shrink-0`}>
                                                     <span className="text-2xl font-bold text-gray-700">
                                                         {entry.username.charAt(0).toUpperCase()}
                                                     </span>
@@ -258,7 +258,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onClose }) => {
 
                             {/* Current User Rank (if not in top shown) */}
                             {user && getUserRank() && getUserRank()! > 10 && (
-                                <div className="mt-6 p-5 bg-white border-2 border-accent rounded-2xl shadow-md">
+                                <div className="mt-6 p-5 bg-white border border-accent rounded-2xl shadow-md">
                                     <p className="text-center text-sm text-gray-600 mb-1">Your Rank</p>
                                     <p className="text-center text-3xl font-bold text-accent">
                                         #{getUserRank()}

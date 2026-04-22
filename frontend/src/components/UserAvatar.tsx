@@ -66,7 +66,7 @@ export const UserAvatar: React.FC = () => {
         <button
           ref={buttonRef}
           onClick={() => setShowDropdown(!showDropdown)}
-          className={`w-10 h-10 rounded-full font-semibold text-sm hover:opacity-80 transition-all duration-300 flex items-center justify-center overflow-hidden border-2 ${theme === 'dark'
+          className={`w-10 h-10 rounded-full font-semibold text-sm hover:opacity-80 transition-all duration-300 flex items-center justify-center overflow-hidden border ${theme === 'dark'
               ? 'bg-white text-black border-white'
               : 'bg-black text-white border-black'
             }`}
@@ -91,7 +91,7 @@ export const UserAvatar: React.FC = () => {
       {showDropdown && createPortal(
         <div
           ref={dropdownRef}
-          className="fixed bg-secondary border-2 border-border rounded-lg shadow-2xl animate-slide-down"
+          className="fixed bg-secondary border border-border rounded-lg shadow-2xl animate-slide-down"
           style={{
             top: `${position.top}px`,
             right: `${position.right}px`,
@@ -99,7 +99,7 @@ export const UserAvatar: React.FC = () => {
             minWidth: '192px',
           }}
         >
-          <div className="p-3 border-b-2 border-border">
+          <div className="p-3 border-b border-border">
             <p className="font-semibold text-primary-text">{user.username}</p>
             <p className="text-sm text-secondary-text break-all">{user.email}</p>
             {user.isGoogleAuth && (

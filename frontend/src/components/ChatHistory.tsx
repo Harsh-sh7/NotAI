@@ -173,7 +173,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({ isOpen, onClose }) => 
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           flex items-center justify-center p-4
         `}>
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-t border-b border-primary"></div>
         </div>
       </>
     );

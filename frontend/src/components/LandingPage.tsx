@@ -167,7 +167,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             {/* Theme Toggle Button */}
             <button
                 onClick={toggleTheme}
-                className="fixed top-6 right-6 z-50 p-3 rounded-lg bg-secondary border-2 border-border hover:border-accent transition-all duration-300 shadow-lg group"
+                className="fixed top-6 right-6 z-50 p-3 rounded-lg bg-secondary border border-border hover:border-accent transition-all duration-300 shadow-lg group"
                 aria-label="Toggle theme"
                 title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
@@ -225,7 +225,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
                         <button
                             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="px-8 py-4 bg-secondary border-2 border-accent rounded-xl font-semibold text-lg hover:bg-accent hover:text-primary transition-all duration-300 hover:scale-105"
+                            className="px-8 py-4 bg-secondary border border-accent rounded-xl font-semibold text-lg hover:bg-accent hover:text-primary transition-all duration-300 hover:scale-105"
                         >
                             Explore Features
                         </button>
@@ -247,7 +247,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                         {features.map((feature, index) => (
                             <div
                                 key={index}
-                                className="group relative bg-primary border-2 border-border hover:border-accent rounded-2xl p-8 transition-all duration-500 hover:scale-105 hover:shadow-2xl"
+                                className="group relative bg-primary border border-border hover:border-accent rounded-2xl p-8 transition-all duration-500 hover:scale-105 hover:shadow-2xl"
                                 style={{ animationDelay: `${index * 0.1}s` }}
                             >
                                 <div className="relative z-10">
@@ -277,7 +277,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                         {stats.map((stat, index) => (
                             <div
                                 key={index}
-                                className="group p-8 bg-secondary border-2 border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105"
+                                className="group p-8 bg-secondary border border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105"
                             >
                                 <div className="text-5xl font-bold text-accent mb-2 group-hover:scale-110 transition-transform duration-300">
                                     {stat.value}
@@ -300,7 +300,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="text-center p-8 bg-primary border-2 border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105">
+                        <div className="text-center p-8 bg-primary border border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105">
                             <div className="w-16 h-16 bg-accent text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                                 1
                             </div>
@@ -308,7 +308,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                             <p className="text-secondary-text">Create your free account in seconds. No credit card required.</p>
                         </div>
 
-                        <div className="text-center p-8 bg-primary border-2 border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105">
+                        <div className="text-center p-8 bg-primary border border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105">
                             <div className="w-16 h-16 bg-accent text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                                 2
                             </div>
@@ -316,7 +316,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                             <p className="text-secondary-text">Ask questions, get answers, and have intelligent conversations.</p>
                         </div>
 
-                        <div className="text-center p-8 bg-primary border-2 border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105">
+                        <div className="text-center p-8 bg-primary border border-border rounded-2xl hover:border-accent transition-all duration-300 hover:scale-105">
                             <div className="w-16 h-16 bg-accent text-primary rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                                 3
                             </div>
@@ -330,7 +330,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             {/* CTA Section */}
             <section className="relative py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center">
-                    <div className="relative bg-secondary border-2 border-accent rounded-3xl p-12 overflow-hidden">
+                    <div className="relative bg-secondary border border-accent rounded-3xl p-12 overflow-hidden">
                         {/* Animated Background */}
                         <div className="absolute inset-0 bg-accent/5 animate-pulse"></div>
 
@@ -353,7 +353,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             </section>
 
             {/* Footer */}
-            <footer className="relative py-8 px-4 sm:px-6 lg:px-8 border-t-2 border-border bg-secondary">
+            <footer className="relative py-8 px-4 sm:px-6 lg:px-8 border-t border-border bg-secondary">
                 <div className="max-w-7xl mx-auto text-center">
                     <p className="text-secondary-text">
                         Built with ❤️ by <span className="text-accent font-semibold">Harshit Shakya</span>

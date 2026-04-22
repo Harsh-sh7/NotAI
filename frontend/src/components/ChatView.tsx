@@ -124,7 +124,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ onAuthRequired }) => {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header with hamburger menu */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b-2 border-border bg-secondary">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-secondary">
           <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 text-secondary-text hover:text-primary-text rounded-lg transition-colors"
@@ -161,7 +161,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ onAuthRequired }) => {
             )}
         </main>
 
-        <footer className="sticky bottom-0 p-3 md:p-6 bg-secondary border-t-2 border-border">
+        <footer className="sticky bottom-0 p-3 md:p-6 bg-secondary border-t border-border">
           <div className="max-w-3xl mx-auto">
             <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} onAuthRequired={onAuthRequired} />
             <p className="text-center text-xs text-secondary-text mt-2">

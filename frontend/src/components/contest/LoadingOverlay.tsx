@@ -8,7 +8,7 @@ interface LoadingOverlayProps {
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ level, topic }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 animate-fade-in">
-            <div className="bg-secondary border-2 border-border rounded-2xl p-8 max-w-md w-full mx-4 animate-scale-in">
+            <div className="bg-secondary border border-border rounded-2xl p-8 max-w-md w-full mx-4 animate-scale-in">
                 <div className="flex flex-col items-center gap-6">
                     {/* Animated Spinner */}
                     <div className="relative w-20 h-20">

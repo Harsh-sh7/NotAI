@@ -35,9 +35,9 @@ export const ContestProfile: React.FC<ContestProfileProps> = ({ onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 animate-fade-in">
-            <div className="bg-secondary border-2 border-border rounded-2xl w-full max-w-md overflow-hidden animate-scale-in">
+            <div className="bg-secondary border border-border rounded-2xl w-full max-w-md overflow-hidden animate-scale-in">
                 {/* Header */}
-                <div className="p-6 border-b-2 border-border flex items-center justify-between">
+                <div className="p-6 border-b border-border flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-primary-text">Contest Profile</h2>
                     <button
                         onClick={onClose}
@@ -52,7 +52,7 @@ export const ContestProfile: React.FC<ContestProfileProps> = ({ onClose }) => {
                 {/* Content */}
                 <div className="p-6 space-y-6">
                     {/* User Info */}
-                    <div className="text-center pb-6 border-b-2 border-border">
+                    <div className="text-center pb-6 border-b border-border">
                         <div className="w-20 h-20 bg-accent bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
                             <span className="text-3xl font-bold text-accent">
                                 {user?.username?.charAt(0).toUpperCase()}
@@ -70,7 +70,7 @@ export const ContestProfile: React.FC<ContestProfileProps> = ({ onClose }) => {
                         <div className="space-y-3">
                             <button
                                 onClick={() => setSelectedLevel('Beginner')}
-                                className={`w-full p-4 rounded-xl border-2 transition-all duration-300 text-left ${selectedLevel === 'Beginner'
+                                className={`w-full p-4 rounded-xl border transition-all duration-300 text-left ${selectedLevel === 'Beginner'
                                         ? 'border-green-500 bg-green-500 bg-opacity-10'
                                         : 'border-border bg-primary hover:border-green-500'
                                     }`}
@@ -96,7 +96,7 @@ export const ContestProfile: React.FC<ContestProfileProps> = ({ onClose }) => {
 
                             <button
                                 onClick={() => setSelectedLevel('Intermediate')}
-                                className={`w-full p-4 rounded-xl border-2 transition-all duration-300 text-left ${selectedLevel === 'Intermediate'
+                                className={`w-full p-4 rounded-xl border transition-all duration-300 text-left ${selectedLevel === 'Intermediate'
                                         ? 'border-yellow-500 bg-yellow-500 bg-opacity-10'
                                         : 'border-border bg-primary hover:border-yellow-500'
                                     }`}
@@ -122,7 +122,7 @@ export const ContestProfile: React.FC<ContestProfileProps> = ({ onClose }) => {
 
                             <button
                                 onClick={() => setSelectedLevel('Expert')}
-                                className={`w-full p-4 rounded-xl border-2 transition-all duration-300 text-left ${selectedLevel === 'Expert'
+                                className={`w-full p-4 rounded-xl border transition-all duration-300 text-left ${selectedLevel === 'Expert'
                                         ? 'border-red-500 bg-red-500 bg-opacity-10'
                                         : 'border-border bg-primary hover:border-red-500'
                                     }`}

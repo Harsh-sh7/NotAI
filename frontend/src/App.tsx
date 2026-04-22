@@ -24,11 +24,7 @@ const MainApp: React.FC = () => {
     return savedView || 'chat';
   });
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showLanding, setShowLanding] = useState(() => {
-    // Show landing page only if user hasn't visited before
-    const hasVisited = localStorage.getItem('hasVisitedNotAI');
-    return !hasVisited;
-  });
+  const [showLanding, setShowLanding] = useState(true);
   const { user, logout, isLoading } = useAuth();
   const { theme, toggleTheme } = useTheme(); // MUST be called before any conditional returns
 
@@ -38,7 +34,6 @@ const MainApp: React.FC = () => {
   }, [view]);
 
   const handleGetStarted = () => {
-    localStorage.setItem('hasVisitedNotAI', 'true');
     setShowLanding(false);
   };
 
@@ -67,7 +62,7 @@ const MainApp: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-primary text-primary-text font-sans transition-colors duration-300">
       {/* Desktop header - hidden on mobile */}
-      <header className="hidden md:flex p-4 border-b-2 border-border items-center justify-between bg-secondary animate-slide-down">
+      <header className="hidden md:flex p-4 border-b border-border items-center justify-between bg-secondary animate-slide-down">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setShowLanding(true)}
@@ -80,7 +75,7 @@ const MainApp: React.FC = () => {
           </button>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 p-1.5 bg-primary border-2 border-border rounded-xl">
+          <div className="flex items-center space-x-2 p-1.5 bg-primary border border-border rounded-xl">
             <button
               onClick={() => setView('chat')}
               className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${view === 'chat'
@@ -113,7 +108,7 @@ const MainApp: React.FC = () => {
           {/* Theme Toggle in Nav Bar */}
           <button
             onClick={toggleTheme}
-            className="p-2.5 rounded-lg bg-primary border-2 border-border hover:border-accent transition-all duration-300 group"
+            className="p-2.5 rounded-lg bg-primary border border-border hover:border-accent transition-all duration-300 group"
             aria-label="Toggle theme"
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
@@ -150,7 +145,7 @@ const MainApp: React.FC = () => {
       </header>
 
       {/* Mobile header for view switching */}
-      <div className="md:hidden flex items-center justify-between p-3 border-b-2 border-border bg-secondary animate-slide-down">
+      <div className="md:hidden flex items-center justify-between p-3 border-b border-border bg-secondary animate-slide-down">
         <button
           onClick={() => setShowLanding(true)}
           className="flex items-center gap-2 group"
@@ -162,7 +157,7 @@ const MainApp: React.FC = () => {
         </button>
 
         <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1 p-1 bg-primary border-2 border-border rounded-lg">
+          <div className="flex items-center space-x-1 p-1 bg-primary border border-border rounded-lg">
             <button
               onClick={() => setView('chat')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center gap-1 ${view === 'chat'
@@ -201,7 +196,7 @@ const MainApp: React.FC = () => {
           {/* Theme Toggle for Mobile */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg bg-primary border-2 border-border hover:border-accent transition-all duration-300"
+            className="p-2 rounded-lg bg-primary border border-border hover:border-accent transition-all duration-300"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (

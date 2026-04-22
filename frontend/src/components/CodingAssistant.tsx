@@ -210,12 +210,12 @@ ${error}
         <div className="flex-1 flex flex-col overflow-hidden">
             <main className="flex-1 p-4 md:p-6 flex flex-col items-center overflow-y-auto">
                 <div className="w-full max-w-6xl space-y-4">
-                    <div className="flex flex-wrap gap-4 justify-between items-center bg-secondary p-3 rounded-lg border-2 border-border">
+                    <div className="flex flex-wrap gap-4 justify-between items-center bg-secondary p-3 rounded-lg border border-border">
                         <div className="flex items-center gap-4">
                             <select
                                 value={language}
                                 onChange={(e) => handleLanguageChange(e.target.value)}
-                                className="bg-primary border-2 border-border px-4 py-2 rounded-lg text-sm text-primary-text focus:outline-none focus:border-accent transition-all"
+                                className="bg-primary border border-border px-4 py-2 rounded-lg text-sm text-primary-text focus:outline-none focus:border-accent transition-all"
                             >
                                 <option value="javascript">JavaScript</option>
                                 <option value="python">Python</option>
@@ -245,12 +245,12 @@ ${error}
                         onSelectionChange={handleSelectionChange}
                     />
                     {(output.length > 0 || error) && (
-                        <div className="mt-4 bg-secondary p-4 rounded-lg border-2 border-border animate-fade-in">
+                        <div className="mt-4 bg-secondary p-4 rounded-lg border border-border animate-fade-in">
                             <h3 className="text-sm font-semibold text-secondary-text mb-2 tracking-wider uppercase">Console</h3>
                             <div className="text-sm whitespace-pre-wrap font-mono text-primary-text max-h-48 overflow-y-auto">
-                                {output.map((line, index) => <div key={index} className="border-l-2 border-transparent pl-2">{line}</div>)}
+                                {output.map((line, index) => <div key={index} className="border-l border-transparent pl-2">{line}</div>)}
                                 {error && (
-                                    <div className="text-red-500 border-l-2 border-red-500 pl-2 mt-2">
+                                    <div className="text-red-500 border-l border-red-500 pl-2 mt-2">
                                         <p>{error}</p>
                                         <button onClick={handleAskAboutError} disabled={isLoading} className="mt-2 text-sm flex items-center px-3 py-1 bg-red-500 bg-opacity-20 hover:bg-opacity-30 rounded-md transition-all text-red-400 disabled:opacity-50 font-medium">
                                             <SparklesIcon className="w-4 h-4 mr-2" />
@@ -266,7 +266,7 @@ ${error}
 
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in">
-                    <div className="bg-secondary border-2 border-border p-6 rounded-lg shadow-xl w-full max-w-lg animate-slide-up">
+                    <div className="bg-secondary border border-border p-6 rounded-lg shadow-xl w-full max-w-lg animate-slide-up">
                         <h2 className="text-lg font-semibold mb-2 text-primary-text">Ask about your code</h2>
                         <p className="text-sm text-secondary-text mb-4">Your selected code snippet will be sent to Gemini along with your question.</p>
                         <form onSubmit={handleModalSubmit}>
@@ -275,10 +275,10 @@ ${error}
                                 onChange={(e) => setQuestion(e.target.value)}
                                 placeholder="e.g., How can I optimize this function?"
                                 rows={4}
-                                className="w-full bg-primary border-2 border-border rounded-lg p-3 focus:outline-none focus:border-accent text-primary-text placeholder-secondary-text transition-all"
+                                className="w-full bg-primary border border-border rounded-lg p-3 focus:outline-none focus:border-accent text-primary-text placeholder-secondary-text transition-all"
                             />
                             <div className="mt-4 flex justify-end space-x-2">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-primary border-2 border-border rounded-lg hover:border-accent transition-all font-medium">Cancel</button>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-primary border border-border rounded-lg hover:border-accent transition-all font-medium">Cancel</button>
                                 <button type="submit" className="px-4 py-2 bg-accent text-primary rounded-lg hover:opacity-80 transition-all font-semibold">Submit</button>
                             </div>
                         </form>
