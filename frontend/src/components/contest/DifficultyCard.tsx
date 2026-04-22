@@ -17,16 +17,25 @@ export const DifficultyCard: React.FC<DifficultyCardProps> = ({
 }) => {
     const levelConfig = {
         Beginner: {
-            color: 'green',
-            letter: 'B'
+            bgHover: 'hover:bg-emerald-500/5 hover:border-emerald-500/30',
+            dot: 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]',
+            text: 'text-emerald-500',
+            btnClass: 'border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white',
+            gradient: 'from-emerald-500 to-emerald-400'
         },
         Intermediate: {
-            color: 'yellow',
-            letter: 'I'
+            bgHover: 'hover:bg-amber-500/5 hover:border-amber-500/30',
+            dot: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]',
+            text: 'text-amber-500',
+            btnClass: 'border border-amber-500/30 text-amber-500 hover:bg-amber-500 hover:text-white',
+            gradient: 'from-amber-500 to-amber-400'
         },
         Expert: {
-            color: 'red',
-            letter: 'E'
+            bgHover: 'hover:bg-rose-500/5 hover:border-rose-500/30',
+            dot: 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]',
+            text: 'text-rose-500',
+            btnClass: 'border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white',
+            gradient: 'from-rose-500 to-rose-400'
         }
     };
 
@@ -38,29 +47,27 @@ export const DifficultyCard: React.FC<DifficultyCardProps> = ({
 
     if (user) {
         return (
-            <div className={`group bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 hover:border-${config.color}-500/50 hover:shadow-lg hover:shadow-${config.color}-500/10 transition-all duration-300`}>
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg bg-${config.color}-500/10 flex items-center justify-center`}>
-                            <span className={`text-lg font-bold text-${config.color}-500`}>{config.letter}</span>
-                        </div>
+            <div className={`group bg-secondary/30 backdrop-blur-md border border-white/5 rounded-2xl p-6 ${config.bgHover} transition-all duration-500 overflow-hidden relative`}>
+                <div className="flex items-center justify-between mb-5 relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className={`w-2.5 h-2.5 rounded-full ${config.dot}`}></div>
                         <div>
-                            <h3 className="text-lg font-semibold text-primary-text">{level}</h3>
-                            <p className="text-sm text-secondary-text">
-                                {solvedCount} / {totalCount} solved
+                            <h3 className="text-xl font-medium text-primary-text tracking-wide">{level}</h3>
+                            <p className="text-sm text-secondary-text font-light mt-0.5">
+                                {solvedCount} of {totalCount} completed
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onStart}
-                        className={`px-6 py-2.5 bg-${config.color}-500 text-white rounded-lg font-medium hover:bg-${config.color}-600 transition-all duration-300 hover:scale-105`}
+                        className={`px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 ${config.btnClass}`}
                     >
-                        Start
+                        Start Challenge
                     </button>
                 </div>
-                <div className="h-2 bg-primary/50 rounded-full overflow-hidden">
+                <div className="h-1 bg-white/5 rounded-full overflow-hidden relative z-10">
                     <div
-                        className={`h-full bg-gradient-to-r from-${config.color}-500 to-${config.color}-400 transition-all duration-500`}
+                        className={`h-full bg-gradient-to-r ${config.gradient} transition-all duration-1000 ease-out`}
                         style={{ width: `${progressPercent}%` }}
                     ></div>
                 </div>
@@ -69,20 +76,18 @@ export const DifficultyCard: React.FC<DifficultyCardProps> = ({
     }
 
     return (
-        <div className="bg-secondary/50 backdrop-blur-sm border border-border/50 rounded-xl p-6">
+        <div className="group bg-secondary/30 backdrop-blur-md border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-all duration-500">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg bg-${config.color}-500/10 flex items-center justify-center`}>
-                        <span className={`text-lg font-bold text-${config.color}-500`}>{config.letter}</span>
-                    </div>
+                <div className="flex items-center gap-4">
+                    <div className={`w-2.5 h-2.5 rounded-full ${config.dot}`}></div>
                     <div>
-                        <h3 className="text-lg font-semibold text-primary-text">{level}</h3>
-                        <p className="text-sm text-secondary-text">Sign in to track progress</p>
+                        <h3 className="text-xl font-medium text-primary-text tracking-wide">{level}</h3>
+                        <p className="text-sm text-secondary-text font-light mt-0.5">Sign in to track progress</p>
                     </div>
                 </div>
                 <button
                     onClick={onAuthRequired}
-                    className={`px-6 py-2.5 bg-${config.color}-500 text-white rounded-lg font-medium hover:bg-${config.color}-600 transition-all duration-300`}
+                    className="px-5 py-2 rounded-full font-medium text-sm border border-white/10 text-primary-text hover:bg-white/5 transition-all duration-300"
                 >
                     Sign In
                 </button>

@@ -791,9 +791,9 @@ STRICT REQUIREMENTS FOR TEST CASES:
                 <div className="h-full flex flex-col" style={{ width: `${problemPanelWidth}%`, flexShrink: 0 }}>
                     <div className="p-4 border-b border-border bg-secondary flex items-center justify-between flex-shrink-0">
                         <h2 className="text-xl font-bold text-primary-text">{problem.title}</h2>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${problem.difficulty === 'Beginner' ? 'bg-green-500 bg-opacity-20 text-green-500' :
-                            problem.difficulty === 'Intermediate' ? 'bg-yellow-500 bg-opacity-20 text-yellow-500' :
-                                'bg-red-500 bg-opacity-20 text-red-500'
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${problem.difficulty === 'Beginner' ? 'bg-emerald-500 bg-opacity-20 text-emerald-500' :
+                            problem.difficulty === 'Intermediate' ? 'bg-amber-500 bg-opacity-20 text-amber-500' :
+                                'bg-rose-500 bg-opacity-20 text-rose-500'
                             }`}>
                             {problem.difficulty}
                         </span>
@@ -958,7 +958,7 @@ STRICT REQUIREMENTS FOR TEST CASES:
                                         )}
 
                                         {error && (
-                                            <div className="text-red-500 whitespace-pre-wrap mb-4">
+                                            <div className="text-rose-500 whitespace-pre-wrap mb-4">
                                                 {error}
                                             </div>
                                         )}
@@ -969,8 +969,8 @@ STRICT REQUIREMENTS FOR TEST CASES:
                                                     <div
                                                         key={idx}
                                                         className={`p-3 rounded-lg border ${result.passed
-                                                            ? 'bg-green-500 bg-opacity-10 border-green-500 text-green-500'
-                                                            : 'bg-red-500 bg-opacity-10 border-red-500 text-red-500'
+                                                            ? 'bg-emerald-500 bg-opacity-10 border-emerald-500 text-emerald-500'
+                                                            : 'bg-rose-500 bg-opacity-10 border-rose-500 text-rose-500'
                                                             }`}
                                                     >
                                                         <pre className="whitespace-pre-wrap text-xs">{result.message}</pre>

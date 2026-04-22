@@ -34,14 +34,17 @@ export const ContestDashboard: React.FC<ContestDashboardProps> = ({
     onAuthRequired
 }) => {
     return (
-        <div className="flex-1 overflow-y-auto bg-primary">
-            <div className="max-w-7xl mx-auto p-6 md:p-8">
-                <div className="text-center mb-12 animate-fade-in">
-                    <h1 className="text-4xl md:text-5xl font-bold text-primary-text mb-4 bg-gradient-to-r from-accent via-purple-500 to-accent bg-clip-text text-transparent animate-gradient">
+        <div className="flex-1 overflow-y-auto bg-primary relative">
+            {/* Subtle premium background glow */}
+            <div className="absolute top-0 inset-x-0 h-[500px] bg-gradient-to-b from-accent/5 via-accent/5 to-transparent blur-3xl pointer-events-none"></div>
+            
+            <div className="max-w-7xl mx-auto p-6 md:p-8 relative z-10">
+                <div className="text-center mb-16 mt-8 animate-fade-in">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-text mb-6 tracking-tight">
                         Coding Contest
                     </h1>
-                    <p className="text-lg text-secondary-text max-w-2xl mx-auto">
-                        Challenge yourself with AI-generated problems. Choose your difficulty and start coding!
+                    <p className="text-lg text-secondary-text max-w-2xl mx-auto font-light tracking-wide">
+                        Challenge yourself with AI-generated problems. Choose your difficulty and start coding.
                     </p>
                 </div>
 
