@@ -45,6 +45,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           <Markdown
             remarkPlugins={[remarkGfm]}
             components={{
+              pre({ children }) {
+                return <>{children}</>;
+              },
               code({ node, className, children, ...props }) {
                 const match = /language-(\w+)/.exec(className || '');
                 const codeString = String(children).replace(/\n$/, '');

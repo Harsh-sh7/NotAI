@@ -25,6 +25,9 @@ export const Notification: React.FC<NotificationProps> = ({ id, content, onClose
             <Markdown
               remarkPlugins={[remarkGfm]}
               components={{
+                pre({ children }) {
+                  return <>{children}</>;
+                },
                 code({ node, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const codeString = String(children).replace(/\n$/, '');

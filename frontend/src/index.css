@@ -337,7 +337,7 @@ input:focus, textarea:focus {
 }
 
 /* Beautiful inline code blocks for Markdown rendering in both Light and Dark mode */
-.prose code {
+.prose code:not(pre code) {
   color: var(--color-accent) !important;
   background-color: var(--color-hover) !important;
   padding: 0.15rem 0.4rem !important;
@@ -348,7 +348,12 @@ input:focus, textarea:focus {
 }
 
 /* Remove default Tailwind prose backticks for inline code */
-.prose code::before,
-.prose code::after {
+.prose code:not(pre code)::before,
+.prose code:not(pre code)::after {
   content: "" !important;
+}
+
+/* Ensure code blocks do not have background highlighting behind code text lines */
+.prose pre code {
+  background: transparent !important;
 }
