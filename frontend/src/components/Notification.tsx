@@ -1,6 +1,7 @@
 import React from 'react';
 import { CloseIcon, GeminiIcon } from './Icons';
 import { CodeBlock } from './CodeBlock';
+import { useTheme } from '../context/ThemeContext';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -11,6 +12,7 @@ interface NotificationProps {
 }
 
 export const Notification: React.FC<NotificationProps> = ({ id, content, onClose }) => {
+    const { theme } = useTheme();
     return (
     <div className="bg-surface border border-secondary rounded-lg shadow-2xl p-4 animate-fade-in animate-slide-up">
       <div className="flex items-start space-x-3">
@@ -19,7 +21,7 @@ export const Notification: React.FC<NotificationProps> = ({ id, content, onClose
         </div>
         <div className="flex-1 overflow-hidden">
           <h3 className="font-semibold text-primary-content">NotAI Assistant Response</h3>
-          <div className="prose prose-invert prose-sm max-w-none mt-2 space-y-2 max-h-[40vh] overflow-y-auto pr-2">
+          <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm max-w-none mt-2 space-y-2 max-h-[40vh] overflow-y-auto pr-2`}>
             <Markdown
               remarkPlugins={[remarkGfm]}
               components={{

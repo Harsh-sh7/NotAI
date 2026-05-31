@@ -3,6 +3,7 @@ import { type Message } from '../types';
 import { CodeBlock } from './CodeBlock';
 import { UserIcon } from './Icons';
 import { Logo } from './Logo';
+import { useTheme } from '../context/ThemeContext';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -13,6 +14,7 @@ interface ChatMessageProps {
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const { role, content } = message;
   const isUser = role === 'user';
+  const { theme } = useTheme();
 
   // Don't render empty model messages (they're handled by loading animation)
   if (!isUser && !content.trim()) {
@@ -39,7 +41,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         </div>
       )}
       <div className={bubbleClasses}>
-        <div className="prose prose-invert prose-sm md:prose-base max-w-none space-y-4">
+        <div className={`prose ${theme === 'dark' ? 'prose-invert' : ''} prose-sm md:prose-base max-w-none space-y-4`}>
           <Markdown
             remarkPlugins={[remarkGfm]}
             components={{
