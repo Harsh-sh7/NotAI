@@ -1,6 +1,8 @@
 import React from 'react';
 import { CloseIcon, GeminiIcon } from './Icons';
 import { CodeBlock } from './CodeBlock';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface NotificationProps {
   id: number;
@@ -8,31 +10,7 @@ interface NotificationProps {
   onClose: (id: number) => void;
 }
 
-const parseContent = (content: string): (string | { code: string; lang: string })[] => {
-    if (!content) return [];
-    const parts = content.split(/(```[\s\S]*?```)/g);
-    return parts.map(part => {
-      const match = part.match(/```(\w*)\n([\s\S]*?)```/);
-      if (match) {
-        return { code: match[2].trim(), lang: match[1] || 'text' };
-      }
-      return part;
-    }).filter(part => (typeof part === 'string' && part.trim() !== '') || typeof part === 'object');
-};
-  
-const renderMarkdown = (text: string) => {
-    // Check if CDN scripts have loaded to prevent race condition errors
-    if (typeof (window as any).marked?.parse === 'function' && typeof (window as any).DOMPurify?.sanitize === 'function') {
-        const rawMarkup = (window as any).marked.parse(text, { breaks: true, gfm: true });
-        return (window as any).DOMPurify.sanitize(rawMarkup);
-    }
-    // Fallback to plain text if scripts are not available
-    return text;
-}
-
 export const Notification: React.FC<NotificationProps> = ({ id, content, onClose }) => {
-    const contentParts = parseContent(content);
-
     return (
     <div className="bg-surface border border-secondary rounded-lg shadow-2xl p-4 animate-fade-in animate-slide-up">
       <div className="flex items-start space-x-3">
@@ -42,12 +20,25 @@ export const Notification: React.FC<NotificationProps> = ({ id, content, onClose
         <div className="flex-1 overflow-hidden">
           <h3 className="font-semibold text-primary-content">NotAI Assistant Response</h3>
           <div className="prose prose-invert prose-sm max-w-none mt-2 space-y-2 max-h-[40vh] overflow-y-auto pr-2">
-             {contentParts.map((part, index) => {
-                if (typeof part === 'string') {
-                    return <div key={index} dangerouslySetInnerHTML={{ __html: renderMarkdown(part) }} />;
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                code({ node, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const codeString = String(children).replace(/\n$/, '');
+                  const isInline = !match;
+                  return !isInline ? (
+                    <CodeBlock code={codeString} language={match[1]} />
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
                 }
-                return <CodeBlock key={index} code={part.code} language={part.lang} />;
-            })}
+              }}
+            >
+              {content}
+            </Markdown>
           </div>
         </div>
         <button onClick={() => onClose(id)} className="text-muted hover:text-primary-content">
