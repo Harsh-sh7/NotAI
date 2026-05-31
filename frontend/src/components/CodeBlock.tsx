@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CopyIcon, CheckIcon } from './Icons';
 
@@ -26,14 +25,14 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
   };
 
   return (
-    <div className="bg-background rounded-lg my-4 overflow-hidden border border-secondary">
-      <div className="flex justify-between items-center px-4 py-2 bg-secondary text-xs text-muted">
-        <span>{language}</span>
-        <button onClick={handleCopy} className="flex items-center space-x-1 text-muted hover:text-primary-content transition-colors">
+    <div className="bg-[#18181b] rounded-lg my-4 overflow-hidden border border-[#27272a] text-[#f4f4f5]">
+      <div className="flex justify-between items-center px-4 py-2 bg-[#27272a] text-xs text-[#a1a1aa]">
+        <span className="font-mono uppercase">{language}</span>
+        <button onClick={handleCopy} className="flex items-center space-x-1 text-[#a1a1aa] hover:text-[#f4f4f5] transition-colors">
           {isCopied ? (
             <>
-              <CheckIcon className="w-4 h-4" />
-              <span>Copied!</span>
+              <CheckIcon className="w-4 h-4 text-emerald-500" />
+              <span className="text-emerald-500 font-medium">Copied!</span>
             </>
           ) : (
             <>
@@ -43,7 +42,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
           )}
         </button>
       </div>
-      <pre className="p-4 text-sm overflow-x-auto">
+      <pre className="p-4 text-sm overflow-x-auto bg-[#18181b] text-[#f4f4f5] font-mono leading-relaxed">
         <code className={`language-${language}`}>{code}</code>
       </pre>
     </div>
